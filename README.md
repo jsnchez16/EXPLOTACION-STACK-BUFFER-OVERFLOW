@@ -10,7 +10,9 @@ Este repositorio es un ejemplo de aplicación de la metodología y análisis de 
 * [2. Configuración del entorno de trabajo](#step2)
   * [2.1 Descarga de vulnserver](#step2-1)
   * [2.2 Descarga de Immunity Debugger](#step2-2)
- 
+  * [2.3 Instalación de Immunity Debugger](#step2-3)
+  * [2.4 Descarga de Mona](#step2-4)
+  * [2.5 Instalación de Mona](#step2-5)
 ---
 ---
 
@@ -39,19 +41,62 @@ Lista de las principales herramientas utilizadas que sirven como base para reali
 ## ***2. Configuración del entorno de trabajo***
 
 A continuación de muestra dónde descargar y cómo instalar y configurar las herramientas.
+Se recomienda trabajar en una misma carpeta.
 
 <a name="step2-1"></a>
 
 ## ***2.1 Descarga de vulnserver***
 
-- Visitar la página oficial de vulnserver (https://thegreycorner.com/vulnserver.html)
-- Clonar el repositorio de vulnserver:
+- Visitar la página oficial de vulnserver (https://thegreycorner.com/vulnserver.html).
+- Clonar el repositorio de vulnserver.
 	- Abrir un CMD en la ruta deseada para la descarga y clonar:
 ```
 git clone https://github.com/stephenbradshaw/vulnserver
 ```
+- El contenido del repositorio incluye el código, librerías y otros archivos entre los que se encuentra el binario ejecutable.
 
- <a name="step2-2"></a>
+<img width="614" height="237" alt="image" src="https://github.com/user-attachments/assets/e7244b09-c73d-4cf6-b99c-a56a12520999" />
+
+<a name="step2-2"></a>
 
 ## ***2.2 Descarga de Immunity Debugger***
+
+- ***Actualmente la página oficial de descarga está caída (https://debugger.immunityinc.com/).***
+- Se puede descargar en el siguiente repositorio (https://github.com/kbandla/ImmunityDebugger/releases/tag/1.85).
+- Click sobre el fichero .exe y se iniciará la descarga.
+
+<img width="413" height="470" alt="image" src="https://github.com/user-attachments/assets/19762637-91b3-4689-9164-6e7add71718d" />
+
+<a name="step2-3"></a>
+
+## ***2.3 Instalación de Immunity Debugger***
+- Una vez descargado, localizar el ejecutable setup y doble click para comenzar el proceso de instalación.
+- Aceptar los términos y condiciones e instalar siguiendo el proceso.
+  
+<img width="481" height="331" alt="image" src="https://github.com/user-attachments/assets/4457e17c-07ac-474e-bb1c-59bb343cda00" />
+
+- Posteriormente, localizar el ejecutable Immunity Debugger para ejecutar el programa haciendo doble click. Por defecto, en la instalación se genera la carpeta ***C:\Program Files (x86)\Immunity Inc\Immunity Debugger*** 
+
+<img width="613" height="516" alt="image" src="https://github.com/user-attachments/assets/8629c3a7-42ce-4b2c-9e54-dfe6a513ef91" />
+
+---
+
+<img width="613" height="516" alt="image" src="https://github.com/user-attachments/assets/22133dec-4197-48ac-9bae-adb13c81c781" />
+
+<a name="step2-4"></a>
+
+## ***2.4 Descarga de Mona***
+
+- La página oficial (https://www.corelan.be/index.php/2011/07/14/mona-py-the-manual/)
+- Clonar el repositorio de mona.py.
+	- Abrir un CMD en la ruta deseada para la descarga y clonar:
+```
+git clone https://github.com/corelan/mona.git
+```
+
+<a name="step2-5"></a>
+
+## ***2.5 Instalación de Mona***
+
+
 - Al instalarlo se instala también Python 2.17 y se recomienda instalar el 3.14 o más actual.
