@@ -1,0 +1,2 @@
+# Ignore Windows shortcut (.lnk) files everywhere in the repo
+*.lnk
