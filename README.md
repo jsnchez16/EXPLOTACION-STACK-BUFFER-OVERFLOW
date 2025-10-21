@@ -15,6 +15,12 @@ Este repositorio es un ejemplo de aplicación de la metodología y análisis de 
   * [2.5 Instalación de Mona](#step2-5)
   * [2.6 Descarga de IDA Free](#step2-6)
   * [2.7 Instalación de IDA Free](#step2-7)
+  * [2.8 Descarga de Netcat (Nmap)](#step2-8)
+  * [2.9 Descarga de Netcat (Nmap)](#step2-9)
+* [3. Vulnserver en Immunity Debugger](#step3)
+* [4. Vulnserver en IDA Free](#step4)
+* [X. Ejecución del binario y conexión al servidor vulnerable](#stepX)
+	
 ---
 ---
 
@@ -32,12 +38,17 @@ Lista de las principales herramientas utilizadas que sirven como base para reali
 
 - **IDA Free**. Depurador, desensamblador y decompilador. Para la realización de técnicas de ingeniería inversa.
 
+- **Netcat (Nmap)**. Herramienta de línea de comandos para realizar conexiones, leer y escribir datos en la red a través de TCP y UDP.
+
 - **Metasploit Framework**. Para los pasos finales de la explotación.
 
-- **Otros deseables:**
+- **Otros:**
   
 	- **Visual Studio Code**
  	- **Git**
+    - **Windows SDK**
+    - **Java JDK**
+    - **Python 3.X y librerías**
 
 ---
 
@@ -75,12 +86,13 @@ git clone https://github.com/stephenbradshaw/vulnserver
 <a name="step2-3"></a>
 
 ### ***2.3 Instalación de Immunity Debugger***
+
 - Una vez descargado, localizar el ejecutable setup y doble click para comenzar el proceso de instalación.
 - Aceptar los términos y condiciones e instalar siguiendo el proceso.
   
 <img width="481" height="331" alt="image" src="https://github.com/user-attachments/assets/4457e17c-07ac-474e-bb1c-59bb343cda00" />
 
-- Posteriormente, localizar el ejecutable Immunity Debugger para ejecutar el programa haciendo doble click. Por defecto, en la instalación se genera la carpeta _C:\Program Files (x86)\Immunity Inc\Immunity Debugger_ 
+- Posteriormente, localizar el ejecutable Immunity Debugger para ejecutar el programa haciendo doble click. Por defecto, en la instalación se genera la carpeta _C:\Program Files (x86)\Immunity Inc\Immunity Debugger_ .
 
 <img width="613" height="516" alt="image" src="https://github.com/user-attachments/assets/8629c3a7-42ce-4b2c-9e54-dfe6a513ef91" />
 
@@ -92,8 +104,8 @@ git clone https://github.com/stephenbradshaw/vulnserver
 
 ### ***2.4 Descarga de Mona***
 
-- La página oficial de Mona (https://www.corelan.be/index.php/2011/07/14/mona-py-the-manual/)
-- Clonar el repositorio de mona.py.
+- [La página oficial de Mona](https://www.corelan.be/index.php/2011/07/14/mona-py-the-manual/)
+- Clonar el repositorio de mona.py .
 	- Abrir un CMD en la ruta deseada para la descarga y clonar con Git:
 ```
 git clone https://github.com/corelan/mona.git
@@ -113,7 +125,7 @@ git clone https://github.com/corelan/mona.git
 
 ### ***2.6 Descarga de IDA Free***
 
-- La página oficial de IDA Free para la descarga (https://hex-rays.com/pricing?section=individuals)
+- [La página oficial de IDA Free](https://hex-rays.com/pricing?section=individuals).
 
 - Seleccionar el paquete Free y descargar siguiendo las instrucciones.
 
@@ -123,5 +135,82 @@ git clone https://github.com/corelan/mona.git
 
 - Localizar el archivo setup descargado.
 - Doble click para iniciar el proceso de instalación.
-- Seguir aceptando los términos y condiciones y seleccionando el directorio de instalación.
+- Aceptar los términos y condiciones y dejar las opciones por defecto de instalación.
 - _Al instalarlo se instala también Python 2.17 y se recomienda instalar el 3.14 o más actual._
+
+<a name="step2-8"></a>
+
+### ***2.8 Descarga de Netcat (Nmap)***
+
+- [La página oficial de Nmap](https://nmap.org/download.html).
+- Seleccionar el sistema operativo. Ej: Microsoft Windows binaries.
+- Seleccionar la versión más estable disponible 'Latest stable release self-installer'. Ej: _nmap-7.98-setup.exe_ .
+
+<a name="step2-9"></a>
+
+### ***2.9 Instalación de Netcat (Nmap)***
+
+- Localizar el archivo setup descargado.
+- Doble click para iniciar el proceso de instalación.
+- Aceptar los términos y condiciones y dejar las opciones por defecto de instalación.
+
+---
+
+<a name="step3"></a>
+
+### ***3 Vulnserver en Immunity Debugger***
+
+- Una vez abierto Immunity Debugger, en la barra de herramientas superior seleccionar _View -> CPU_ y maximizar.
+- A continuación ir a _File -> Open_ y seleccionar el ejecutable de vulnserver.
+- De esta manera se ejecuta una instancia del binario y se obtiene la información del binario, código ensamblador, registros, direcciones que utiliza, etc.
+- En la esquina inferior derecha se indica el estado de ejecución del binario.
+
+<img width="1918" height="1027" alt="image" src="https://github.com/user-attachments/assets/fcc776d6-0b8f-4a60-931c-5205f66d3081" />
+
+---
+
+<a name="step4"></a>
+
+### ***4 Vulnserver en IDA Free***
+
+- Al abrir IDA Free seleccionar si es la primera vez **New Dissasemble a new file**.
+  
+<img width="392" height="353" alt="image" src="https://github.com/user-attachments/assets/493d7c1a-2b42-4475-9087-dcbbc4b70bf3" />
+
+- Seleccionar el ejecutable de vulnserver.
+
+<img width="674" height="382" alt="image" src="https://github.com/user-attachments/assets/f982595e-8d1f-4fe1-9b5d-ccbb4ff01a65" />
+
+---
+
+<img width="557" height="488" alt="image" src="https://github.com/user-attachments/assets/704c8501-7eea-4c22-bbbd-12469ff249c5" />
+
+- Al cargar el binario se obtiene toda la información de este repartida en ventanas y pestañas. Existen dos ventanas principales:
+  
+	- En la ventana ‘Functions’ a la izquierda se muestran las funciones que se están utilizando.La ventana de la derecha 		se divide en diferentes pestañas relacionadas que proporcionan los datos sobre la función seleccionada en la ventana 		anterior.
+   
+ 	- La primera pestaña, ‘IDA View-A’, muestra el esquema en árbol del código ensamblador de la función seleccionada del 		binario.
+
+
+<img width="1297" height="1028" alt="image" src="https://github.com/user-attachments/assets/d2f890c8-5af2-479b-93b0-f76592ee5ee1" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
