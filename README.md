@@ -3,6 +3,8 @@
 Este repositorio sirve como explicación y aplicación de metodología y análisis de vulnerabilidades y su explotación en binarios. Como software vulnerable se utiliza el binario **vulnserver**. El objetivo es explotar la vulnerabilidad Stack-based Buffer Overflow. También se abordan algunos conceptos principales teóricos.
 
 --- 
+---
+---
 
 ## 📇 **Índice de contenidos**
 
@@ -67,6 +69,8 @@ Se recomienda trabajar en una misma carpeta.
 
 Se puede trabajar tanto en una misma máquina como en varias máquinas virtuales.
 
+---
+
 <a name="step2-1"></a>
 
 ### ***2.1. Descarga de vulnserver***
@@ -81,6 +85,8 @@ git clone https://github.com/stephenbradshaw/vulnserver
 
 <img width="614" height="237" alt="image" src="https://github.com/user-attachments/assets/e7244b09-c73d-4cf6-b99c-a56a12520999" />
 
+---
+
 <a name="step2-2"></a>
 
 ### ***2.2. Descarga de Immunity Debugger***
@@ -90,6 +96,8 @@ git clone https://github.com/stephenbradshaw/vulnserver
 - Click sobre el fichero .exe y se iniciará la descarga.
 
 <img width="413" height="470" alt="image" src="https://github.com/user-attachments/assets/19762637-91b3-4689-9164-6e7add71718d" />
+
+---
 
 <a name="step2-3"></a>
 
@@ -108,6 +116,8 @@ git clone https://github.com/stephenbradshaw/vulnserver
 
 <img width="613" height="516" alt="image" src="https://github.com/user-attachments/assets/22133dec-4197-48ac-9bae-adb13c81c781" />
 
+---
+
 <a name="step2-4"></a>
 
 ### ***2.4. Descarga de Mona***
@@ -119,6 +129,8 @@ git clone https://github.com/stephenbradshaw/vulnserver
 git clone https://github.com/corelan/mona.git
 ```
 
+---
+
 <a name="step2-5"></a>
 
 ### ***2.5. Instalación de Mona***
@@ -129,6 +141,8 @@ git clone https://github.com/corelan/mona.git
 
 <img width="1914" height="1032" alt="image" src="https://github.com/user-attachments/assets/cfcb9822-5c0f-4332-85be-febb04a73d3c" />
 
+---
+
 <a name="step2-6"></a>
 
 ### ***2.6. Descarga de IDA Free***
@@ -136,6 +150,8 @@ git clone https://github.com/corelan/mona.git
 - [La página oficial de IDA Free](https://hex-rays.com/pricing?section=individuals).
 
 - Seleccionar el paquete Free y descargar siguiendo las instrucciones.
+
+---
 
 <a name="step2-7"></a>
 
@@ -146,6 +162,8 @@ git clone https://github.com/corelan/mona.git
 - Aceptar los términos y condiciones y dejar las opciones por defecto de instalación.
 - _Al instalarlo se instala también Python 2.17 y se recomienda instalar el 3.14 o más actual._
 
+---
+
 <a name="step2-8"></a>
 
 ### ***2.8. Descarga de Netcat (Nmap)***
@@ -153,6 +171,8 @@ git clone https://github.com/corelan/mona.git
 - [La página oficial de Nmap](https://nmap.org/download.html).
 - Seleccionar el sistema operativo. Ej: Microsoft Windows binaries.
 - Seleccionar la versión más estable disponible 'Latest stable release self-installer'. Ej: _nmap-7.98-setup.exe_ .
+
+---
 
 <a name="step2-9"></a>
 
@@ -230,11 +250,15 @@ git clone https://github.com/corelan/mona.git
 
 - En cualquier caso, al obtener una conexión exitosa, desde la terminal donde se envía el comando se toma el control del servidor, ofreciendo este una entrada primera para escribir el comando 'HELP'. Mientras tanto, la terminal del servidor muestra los mensajes de las conexiones recibidas.
 
+---
+
 <a name="step6"></a>
 
 ### 🔎 ***6. Análisis***
 
 Antes de comenzar con la explotación hay que entender la funcionalidad y estructura del programa que se pretende explotar. Para ello, el análisis de código tanto si se tiene acceso al código fuente como al ensamblador del binario y la ingeniería inversa son pasos esenciales previos a la explotación.
+
+---
 
 <a name="step6-1"></a>
 
@@ -245,6 +269,8 @@ Una de las principales maneras de entender en este caso el binario a explotar es
 En el caso de nuestro binario vulnserver una vez realizada la conexión con el servidor se muestra un prompt para introducir el comando HELP. Al hacerlo, se muestra una lista de los comandos válidos y cómo utilizarlos. Cada comando debe venir acompañado de una cadena de caracteres.
 
 <img width="455" height="356" alt="image" src="https://github.com/user-attachments/assets/cdabd144-395b-43bc-9be4-e52a25615223" />
+
+---
 
 <a name="step6-2"></a>
 
@@ -258,6 +284,8 @@ En el caso de no disponer del código fuente se aplica ingeniería inversa sobre
 El objetivo es identificar funciones, estructuras, rutas de ejecución y patrones sospechosos. Ejecutar el programa en un entorno controlado y observar su comportamiento en tiempo real utilizando debuggers y depuradores ayuda a comprender cómo se comporta el software ante determinadas entradas, cómo gestiona la memoria y qué validaciones aplica o no aplica.
 
 Un ejemplo claro de lo que sería aplicar estas técnicas de ingeniería inversa es desensamblar o decompilar el binario a través de herramientas como IDA, Ghidra, Immunity Debugger o xDBG, obteniendo de esta manera el código ensamblador e incluso el pseudocódigo.
+
+---
 
 <a name="step6-2-1"></a>
 
@@ -277,21 +305,25 @@ De esta manera se obtiene una imagen más visual de a qué corresponde cada part
 
 <img width="1489" height="686" alt="image" src="https://github.com/user-attachments/assets/def9d2bf-3dcb-4547-82d5-ae17ff0027af" />
 
+---
+
 <a name="step7"></a>
 
 ### 💥 ***7. Explotación***
 
 Tras el análisis del binario y entender su funcionamiento y flujo de trabajo, es hora de realizar la explotación. 
 
+---
+
 <a name="step7-1"></a>
 
 ### ⌨️ ***7.1. Fuzzing***
 
-Aplicando fuzzing se busca observar cómo reacciona el programa a los diferentes inputs que se le pueden pasar, proporcionando entradas masivas (payloads como cadenas de caracteres) y aleatorias generalmente con el objetivo de detectar fallos y/o resultados inesperados no previstos.
+Aplicando fuzzing se busca observar cómo reacciona el programa a los diferentes inputs que se le pueden pasar, proporcionando entradas masivas (payloads, como cadenas de caracteres) y aleatorias generalmente con el objetivo de detectar fallos y/o resultados inesperados no previstos.
 
 Aplicar fuzzing en este caso es sencillo puesto que el servidor permite entradas por teclado, pudiendo introducir cualquier cadena de caracteres. Para ello se pueden emplear herramientas de fuzzing o generar scripts directamente.
 
-En este caso se emplea el siguiente script a través del cual un bucle establece una conexión con el servidor de vulnserver enviando entradas.
+Se emplea el siguiente script escrito en Python, a través del cual, un bucle establece conexión con el servidor de vulnserver enviando entradas como parámetros del comando válido _TRUN_.
 
 <details>
 <summary><b>Python Script Fuzzing</b></summary>
@@ -350,6 +382,6 @@ finally:
 
 </details>
 
+Estas entradas enviadas constan de una cadena de carácteres con la siguiente estructura: **['comando'] + ['.'] + ['A']** . De esta manera, lo que se está enviando al servidor es el comando 'TRUN' seguido de una cadena de caracteres que comienza con el caracter '.' y el resto son letras A cuyo tamaño va aumentando de manera incremental en cada iteración del bucle.
 
-
-
+Por cada envío incremental se abre y cierra la conexión al servidor hasta que se produce una excepción en la ejecución el binario, indicando el tamaño del buffer enviado con el que se ha producido el crash.
