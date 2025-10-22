@@ -1,6 +1,6 @@
-# 💥 EXPLOTACIÓN DE BINARIOS CON STACK BUFFER OVERFLOW
+# 💥 EXPLOTACIÓN EN BINARIOS | STACK-BASED BUFFER OVERFLOW
 
-Este repositorio es un ejemplo de aplicación de la metodología y análisis de vulnerabilidades y explotación en binarios. Como software vulnerable se utiliza el binario **vulnserver**, que se caracteriza por ser vulnerable a **Stack Buffer Overflow** principalmente.
+Este repositorio sirve como explicación y aplicación de metodología y análisis de vulnerabilidades y su explotación en binarios. Como software vulnerable se utiliza el binario **vulnserver**. El objetivo es explotar la vulnerabilidad Stack-based Buffer Overflow. También se abordan algunos conceptos principales teóricos.
 
 --- 
 
@@ -20,17 +20,21 @@ Este repositorio es un ejemplo de aplicación de la metodología y análisis de 
 * [3. Vulnserver en Immunity Debugger](#step3)
 * [4. Vulnserver en IDA Free](#step4)
 * [5. Ejecución del binario y conexión al servidor vulnerable](#step5)
+* [6. Análisis](#step6)
+  * [6.1. Análisis de ejecución](#step6-1)
+  * [6.2. Ingeniería inversa](#step6-2)
+  	* [6.2.1. Ingeniería inversa en IDA](#step6-2-1)
 	
 ---
 ---
 
 <a name="step1"></a>
 
-## ***1. Entorno de trabajo***
+## 💼 ***1. Entorno de trabajo***
 
 Lista de las principales herramientas utilizadas que sirven como base para realizar el análisis y explotación de vulnerabilidades.
 
-- **Vulnserver**. Es el binario vulnerable. Se trata de un servidor que queda a la espera de una conexión y ofrece una serie de parámetros de entrada tras una conexión exitosa.
+- **Vulnserver**. Es el binario vulnerable. Se trata de un servidor que queda a la espera de recibir conexiones en el puerto 9999 y ofrece una serie de parámetros de entrada tras una conexión exitosa.
 
 - **Immunity Debugger**. Herramienta para depurar y analizar binarios, su código ensamblador, flujo de operación, etc. 
 
@@ -54,7 +58,7 @@ Lista de las principales herramientas utilizadas que sirven como base para reali
 
 <a name="step2"></a>
 
-## ***2. Configuración del entorno de trabajo***
+## ⚙️ ***2. Configuración del entorno de trabajo***
 
 A continuación de muestra dónde descargar y cómo instalar y configurar las herramientas.
 Se recomienda trabajar en una misma carpeta.
@@ -200,7 +204,7 @@ git clone https://github.com/corelan/mona.git
 
 <a name="step5"></a>
 
-### ***5. Ejecución del binario y conexión al servidor vulnerable***
+### 🖥️ ***5. Ejecución del binario y conexión al servidor vulnerable***
 
 - Al ejecutar el binario (.exe) se abre una terminal en la que el servidor se queda esperando por conexiones.
 
@@ -224,6 +228,52 @@ git clone https://github.com/corelan/mona.git
 
 - En cualquier caso, al obtener una conexión exitosa, desde la terminal donde se envía el comando se toma el control del servidor, ofreciendo este una entrada primera para escribir el comando 'HELP'. Mientras tanto, la terminal del servidor muestra los mensajes de las conexiones recibidas.
 
+<a name="step6"></a>
+
+### 🔎 ***6. Análisis***
+
+Antes de comenzar con la explotación hay que entender la funcionalidad y estructura del programa que se pretende explotar. Para ello, el análisis de código tanto si se tiene acceso al código fuente como al ensamblador del binario y la ingeniería inversa son pasos esenciales previos a la explotación.
+
+<a name="step6-1"></a>
+
+### ***6.1. Análisis de ejecución***
+
+Una de las principales maneras de entender en este caso el binario a explotar es ejecutándolo y comprobar qué se puede hacer con el en una ejecución normal, qué parámetros acepta, qué muestra, etc. Entra dentro de lo que se denomina **análisis dinámico**.
+
+En el caso de nuestro binario vulnserver una vez realizada la conexión con el servidor se muestra un prompt para introducir el comando HELP. Al hacerlo, se muestra una lista de los comandos válidos y cómo utilizarlos. Cada comando debe venir acompañado de una cadena de caracteres.
+
+<img width="455" height="356" alt="image" src="https://github.com/user-attachments/assets/cdabd144-395b-43bc-9be4-e52a25615223" />
+
+<a name="step6-2"></a>
+
+### ***6.2. Ingeniería inversa:***
+
+- **Análisis de código fuente:** en el caso de disponer del código fuente del progarma, el análisis del mismo puede darnos pistas importantes sobre vulnerabilidades latentes. Esto puede deberse principalmente al uso de funciones inseguras como son en C _strcpy, gets, etc_.
+	- _En este ejemplo se trabaja como si se careciera del código fuente._
+
+En el caso de no disponer del código fuente se aplica ingeniería inversa sobre el binario ejecutable. Descomponiendo y analizando el comportamiento interno del softwar. Va de la mano con el análisis de ejecución.
+
+El objetivo es identificar funciones, estructuras, rutas de ejecución y patrones sospechosos. Ejecutar el programa en un entorno controlado y observar su comportamiento en tiempo real utilizando debuggers y depuradores ayuda a comprender cómo se comporta el software ante determinadas entradas, cómo gestiona la memoria y qué validaciones aplica o no aplica.
+
+Un ejemplo claro de lo que sería aplicar estas técnicas de ingeniería inversa es desensamblar o decompilar el binario a través de herramientas como IDA, Ghidra, Immunity Debugger o xDBG, obteniendo de esta manera el código ensamblador e incluso el pseudocódigo.
+
+<a name="step6-2-1"></a>
+
+### ***6.2.1 Ingeniería inversa en IDA Free:***
+
+Para obtener y entender el código ensamblador del binario así como el flujo de control del programa se puede emplear la herramienta IDA Free.
+
+- Una vez abierto el programa con el binario cargado, **ir a View -> Open subviews -> Generate pseudocode (F5)**.
+
+<img width="538" height="128" alt="image" src="https://github.com/user-attachments/assets/ed009768-aca5-45fc-ad55-9acd7a449a86" />
+
+- En la ventana de IDA View-A, **clic derecho -> Synchronize with -> Pseudocode-A** . Se obtiene una sincronización entre el código ensamblador y el pseudocódigo generado al seleccionar cualquier línea de código. 
+
+<img width="985" height="674" alt="image" src="https://github.com/user-attachments/assets/f243a022-4cc8-452a-8920-376b64505a07" />
+
+De esta manera se obtiene una imagen más visual de a qué corresponde cada parte del código ensamblador.
+
+<img width="1489" height="686" alt="image" src="https://github.com/user-attachments/assets/def9d2bf-3dcb-4547-82d5-ae17ff0027af" />
 
 
 
