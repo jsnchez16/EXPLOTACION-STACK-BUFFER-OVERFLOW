@@ -28,6 +28,7 @@ Este repositorio sirve como explicación y aplicación de metodología y anális
   	* [6.2.1. Ingeniería inversa en IDA](#step6-2-1)
 * [7. Explotación](#step7)
   * [7.1. Fuzzing](#step7-1)
+  * [7.2. Fuzzing con Immunity Debugger](#step7-2)
 	
 ---
 ---
@@ -40,7 +41,7 @@ Lista de las principales herramientas utilizadas que sirven como base para reali
 
 - **Vulnserver**. Es el binario vulnerable. Se trata de un servidor que queda a la espera de recibir conexiones en el puerto 9999 y ofrece una serie de parámetros de entrada tras una conexión exitosa.
 
-- **Immunity Debugger**. Herramienta para depurar y analizar binarios, su código ensamblador, flujo de operación, etc. 
+- **Immunity Debugger**. Herramienta para depurar y analizar binarios, su código ensamblador, flujo de operación, registros CPU en tiempo real. 
 
 - **Mona**. Es un plugin escrito en Python que se importa en Immunity Debugger para su uso.
 
@@ -384,4 +385,32 @@ finally:
 
 Estas entradas enviadas constan de una cadena de carácteres con la siguiente estructura: **['comando'] + ['.'] + ['A']** . De esta manera, lo que se está enviando al servidor es el comando 'TRUN' seguido de una cadena de caracteres que comienza con el caracter '.' y el resto son letras A cuyo tamaño va aumentando de manera incremental en cada iteración del bucle.
 
-Por cada envío incremental se abre y cierra la conexión al servidor hasta que se produce una excepción en la ejecución el binario, indicando el tamaño del buffer enviado con el que se ha producido el crash.
+Por cada envío incremental se abre y cierra la conexión al servidor hasta que se produce una excepción en la ejecución del binario, indicando el tamaño del buffer enviado con el que se ha producido el crash.
+
+---
+
+<a name="step7-2"></a>
+
+### ⌨️ ***7.2. Fuzzing con Immunity Debugger***
+
+- Abrir Immunity Debugger y ejecutar vulnserver. Para ello ir a _File -> Open (F3)_ y seleccionar el ejecutable vulnserver.
+
+- Abrir la vista de CPU (View -> CPU) para obtener la información del programa en ensamblador, registros de la CUP y direcciones de memoria.
+
+- Al ejecutar vulnserver desde Immunity Debugger de manera inicial estará en estado 'Paused', se muestra en la esquina inferior derecha. Debe verse así:
+
+<img width="1913" height="1030" alt="image" src="https://github.com/user-attachments/assets/19a91228-cc12-4788-82f7-214fb6a9d3fb" />
+
+- Para iniciar la ejecución del servidor y pasar al estado 'Running' hacer clic sobre el icono de play en la barra de herramientas superior.
+
+<img width="394" height="138" alt="image" src="https://github.com/user-attachments/assets/a63f7aae-4c58-4e48-8331-dfc2b5e216d5" />
+
+Para ejecutar el programa de fuzzing basta con abrir una CMD en la carpeta donde se tiene el fichero Python y ejecutar el comando ``` python nombreProgramaFuzzing.py ``` 
+
+El programa envía entradas en bucle aumentando la cadena de caracteres a enviar hasta que vulnserver crashea al enviar una cadena de longitud 2200 bytes.
+
+<img width="546" height="396" alt="image" src="https://github.com/user-attachments/assets/8fdb7a71-e207-4e02-be09-ce6c229f43b0" />
+
+Si nos fijamos en Immunity Debugger el log ya indica que se ha producido una violación de acceso en la dirección [41414141] .
+
+<img width="430" height="359" alt="image" src="https://github.com/user-attachments/assets/f474175f-6580-4f77-b759-d8ff5a8f1012" />
