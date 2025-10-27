@@ -401,6 +401,10 @@ Por cada envío incremental se abre y cierra la conexión al servidor hasta que 
 
 <img width="1913" height="1030" alt="image" src="https://github.com/user-attachments/assets/19a91228-cc12-4788-82f7-214fb6a9d3fb" />
 
+- En resumidas cuentas, los registros de memoria apuntan a direcciones determinadas, el más importante que interesa observar es el registro EIP (Instruction Pointer), que indica la dirección de memoria donde se encuentra la siguiente instrucción a ejecutar.
+
+<img width="343" height="295" alt="image" src="https://github.com/user-attachments/assets/1bde4a97-3723-41c2-bde1-1512a6398cbf" />
+
 - Para iniciar la ejecución del servidor y pasar al estado 'Running' hacer clic sobre el icono de play en la barra de herramientas superior.
 
 <img width="394" height="138" alt="image" src="https://github.com/user-attachments/assets/a63f7aae-4c58-4e48-8331-dfc2b5e216d5" />
@@ -411,6 +415,6 @@ El programa envía entradas en bucle aumentando la cadena de caracteres a enviar
 
 <img width="546" height="396" alt="image" src="https://github.com/user-attachments/assets/8fdb7a71-e207-4e02-be09-ce6c229f43b0" />
 
-Si nos fijamos en Immunity Debugger el log ya indica que se ha producido una violación de acceso en la dirección [41414141] .
+Si nos fijamos en Immunity Debugger el log ya indica que se ha producido una violación de acceso en la dirección 0x41414141.
 
 <img width="430" height="359" alt="image" src="https://github.com/user-attachments/assets/f474175f-6580-4f77-b759-d8ff5a8f1012" />
