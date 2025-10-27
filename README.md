@@ -28,7 +28,8 @@ Este repositorio sirve como explicación y aplicación de metodología y anális
   	* [6.2.1. Ingeniería inversa en IDA](#step6-2-1)
 * [7. Explotación](#step7)
   * [7.1. Fuzzing](#step7-1)
-  * [7.2. Fuzzing con Immunity Debugger](#step7-2)
+  * [7.1.1 Fuzzing con Immunity Debugger](#step7-1-1)
+* [7.2. Descubriendo el offset del registro EIP](#step7-2)
 	
 ---
 ---
@@ -187,7 +188,7 @@ git clone https://github.com/corelan/mona.git
 
 <a name="step3"></a>
 
-### ***3. Vulnserver en Immunity Debugger***
+## ***3. Vulnserver en Immunity Debugger***
 
 - Una vez abierto Immunity Debugger, en la barra de herramientas superior seleccionar _View -> CPU_ y maximizar.
 - A continuación ir a _File -> Open_ y seleccionar el ejecutable de vulnserver.
@@ -200,7 +201,7 @@ git clone https://github.com/corelan/mona.git
 
 <a name="step4"></a>
 
-### ***4. Vulnserver en IDA Free***
+## ***4. Vulnserver en IDA Free***
 
 - Al abrir IDA Free seleccionar si es la primera vez **New Dissasemble a new file**.
   
@@ -227,7 +228,7 @@ git clone https://github.com/corelan/mona.git
 
 <a name="step5"></a>
 
-### 🖥️ ***5. Ejecución del binario y conexión al servidor vulnerable***
+## 🖥️ ***5. Ejecución del binario y conexión al servidor vulnerable***
 
 - Al ejecutar el binario (.exe) se abre una terminal en la que el servidor se queda esperando por conexiones.
 
@@ -255,7 +256,7 @@ git clone https://github.com/corelan/mona.git
 
 <a name="step6"></a>
 
-### 🔎 ***6. Análisis***
+## 🔎 ***6. Análisis***
 
 Antes de comenzar con la explotación hay que entender la funcionalidad y estructura del programa que se pretende explotar. Para ello, el análisis de código tanto si se tiene acceso al código fuente como al ensamblador del binario y la ingeniería inversa son pasos esenciales previos a la explotación.
 
@@ -275,7 +276,7 @@ En el caso de nuestro binario vulnserver una vez realizada la conexión con el s
 
 <a name="step6-2"></a>
 
-### ***6.2. Ingeniería inversa:***
+### ***6.2. Ingeniería inversa***
 
 - **Análisis de código fuente:** en el caso de disponer del código fuente del progarma, el análisis del mismo puede darnos pistas importantes sobre vulnerabilidades latentes. Esto puede deberse principalmente al uso de funciones inseguras como son en C _strcpy, gets, etc_.
 	- _En este ejemplo se trabaja como si se careciera del código fuente._
@@ -290,7 +291,7 @@ Un ejemplo claro de lo que sería aplicar estas técnicas de ingeniería inversa
 
 <a name="step6-2-1"></a>
 
-### ***6.2.1 Ingeniería inversa en IDA Free***
+#### ***6.2.1 Ingeniería inversa en IDA Free***
 
 Para obtener y entender el código ensamblador del binario así como el flujo de control del programa se puede emplear la herramienta IDA Free.
 
@@ -310,7 +311,7 @@ De esta manera se obtiene una imagen más visual de a qué corresponde cada part
 
 <a name="step7"></a>
 
-### 💥 ***7. Explotación***
+## 💥 ***7. Explotación***
 
 Tras el análisis del binario y entender su funcionamiento y flujo de trabajo, es hora de realizar la explotación. 
 
@@ -389,9 +390,9 @@ Por cada envío incremental se abre y cierra la conexión al servidor hasta que 
 
 ---
 
-<a name="step7-2"></a>
+<a name="step7-1-1"></a>
 
-### ⌨️ ***7.2. Fuzzing con Immunity Debugger***
+#### ⌨️ ***7.1.1 Fuzzing con Immunity Debugger***
 
 - Abrir Immunity Debugger y ejecutar vulnserver. Para ello ir a _File -> Open (F3)_ y seleccionar el ejecutable vulnserver.
 
@@ -401,7 +402,11 @@ Por cada envío incremental se abre y cierra la conexión al servidor hasta que 
 
 <img width="1913" height="1030" alt="image" src="https://github.com/user-attachments/assets/19a91228-cc12-4788-82f7-214fb6a9d3fb" />
 
-- En resumidas cuentas, los registros de memoria apuntan a direcciones determinadas, el más importante que interesa observar es el registro EIP (Instruction Pointer), que indica la dirección de memoria donde se encuentra la siguiente instrucción a ejecutar.
+Los registros de memoria apuntan a direcciones determinadas y son registros de arquitectura x86, es decir, de 32 bits. 
+
+El registro más importante a tener en cuenta para la explotación es el **registro EIP (Instruction Pointer)**, que indica la dirección de memoria donde se encuentra la siguiente instrucción a ejecutar. Si este registro se controla y se sobreescribe, se puede indicar la instrucción siguiente a ejecutar.
+
+Otros interesantes son el registro EBP (Base Pointer), que almacena la dirección de la parte superior del marco de pila con el que se trabaja actualmente y el registro ESP (Stack Pointer), que apunta al tope actual de la pila (donde se encuentran las variables locales / retorno).
 
 <img width="343" height="295" alt="image" src="https://github.com/user-attachments/assets/1bde4a97-3723-41c2-bde1-1512a6398cbf" />
 
@@ -409,12 +414,91 @@ Por cada envío incremental se abre y cierra la conexión al servidor hasta que 
 
 <img width="394" height="138" alt="image" src="https://github.com/user-attachments/assets/a63f7aae-4c58-4e48-8331-dfc2b5e216d5" />
 
-Para ejecutar el programa de fuzzing basta con abrir una CMD en la carpeta donde se tiene el fichero Python y ejecutar el comando ``` python nombreProgramaFuzzing.py ``` 
+- Para ejecutar el programa de fuzzing basta con abrir una CMD en la carpeta donde se tiene el fichero Python y ejecutar el comando ``` python nombreProgramaFuzzing.py ``` 
 
-El programa envía entradas en bucle aumentando la cadena de caracteres a enviar hasta que vulnserver crashea al enviar una cadena de longitud 2200 bytes.
+El programa envía entradas en bucle aumentando la longitud de la cadena de caracteres a enviar hasta que vulnserver crashea al enviar una cadena de longitud 2200 bytes.
 
 <img width="546" height="396" alt="image" src="https://github.com/user-attachments/assets/8fdb7a71-e207-4e02-be09-ce6c229f43b0" />
 
-Si nos fijamos en Immunity Debugger el log ya indica que se ha producido una violación de acceso en la dirección 0x41414141.
+Si nos fijamos en Immunity Debugger el log ya indica que se ha producido una violación de acceso en la dirección 0x41414141 y que el programa ha pasado a estado 'Paused'.
 
 <img width="430" height="359" alt="image" src="https://github.com/user-attachments/assets/f474175f-6580-4f77-b759-d8ff5a8f1012" />
+
+--- 
+
+<img width="893" height="578" alt="image" src="https://github.com/user-attachments/assets/050fd634-8eee-4be1-9a76-9033815b59ce" />
+
+En la ventana de registros de la vista CPU se observa que los registros EIP, EBP han sido sobreescritos con 0x41414141 y ESP apunta al tope de la pila a una dirección que contiene una larga secuencia de "A"s .
+
+En la ventana del dump de memoria se muestran las direcciones de memoria y su contenido en el momento del crash.
+
+### ***¿Qué ha pasado?***
+
+Se ha producido un **buffer overflow**. Al enviar una cadena larga (≈2200 bytes) el programa escribió más datos de los que esperaba en una zona de memoria (el búfer) y sobrescribió datos contiguos del stack, incluidos EBP y EIP. Cuando un búfer en el stack se desborda los bytes extras pueden acabar sobrescribiendo primero variables locales, luego registros como EBP y EIP.
+
+Al sobrescribir el registro EIP con 0x41414141 la ejecución intentó saltar a la dirección 0x41414141 y se produjo el crash debido a que dejó de seguir el flujo del programa y saltar a la siguiente instrucción. Como 0x41414141 no apunta a memoria válida/ejecutable, se produce una excepción y por ende un crash.
+
+### ***¿Por qué 0x41414141?***
+
+![Confused High Quality GIF](https://github.com/user-attachments/assets/659d0819-efe4-427c-9f96-f3851246e878)
+
+Hay que recordar que se han estado enviando cadenas muy largas con 'A's al hacer fuzzing.
+
+0x41 en hexadecimal corresponde al carácter ASCII 'A'. 0x41414141 son cuatro bytes 41 41 41 41 (es decir "AAAA"). La memoria es direccionable por bytes, pero el debugger agrupa y muestra palabras de 4 bytes porque se está trabajando con una arquitectura x86 de 32 bits. Por esta razón aparece 41414141 en lugar de 41 41 41 41.
+
+Los registros de 32 bits (EAX, EIP, EBP, ESP...) almacenan 4 bytes, así que si se cargan cuatro 'A's en la pila, el registro toma esos bytes, aparecerá 0x41414141.
+
+<a name="step7-2"></a>
+
+### ⌨️ ***7.2. Descubriendo el offset del registro EIP***
+
+Una vez identificado y analizado el crash del programa el siguiente paso es identificar la longitud de la entrada a enviar a vulnserver para poder sobreescribir el registro EIP y hacerse así con el flujo de control. Es decir cuántas A hay que enviar antes de escribir los 4 bytes que acabarán en el registro EIP.
+
+El offset es el número de bytes desde el inicio del buffer (la primera posición donde se copió el input) hasta el lugar donde se sobrescribe el registro EIP (los 4 bytes que controlan la dirección de ejecución).
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
