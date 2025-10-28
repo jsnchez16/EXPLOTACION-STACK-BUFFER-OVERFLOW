@@ -206,6 +206,12 @@ todo lo que se vaya generando con Mona se guarda en una carpeta establecida en l
 
 <img width="1918" height="1027" alt="image" src="https://github.com/user-attachments/assets/fcc776d6-0b8f-4a60-931c-5205f66d3081" />
 
+La vista que se obtiene consiste en cuatro ventanas:
+
+Código ensamblador - Registros
+
+Stack - Dump de memoria
+
 ---
 
 <a name="step4"></a>
@@ -556,6 +562,8 @@ Al enviarse un payload de 3000 bytes se producirá de nuevo un crash del program
 
 En este caso el programa se queda bloqueado indicando una violación de acceso al ejecutar la instrucción de la dirección a la que apunta el registro EIP, la 396F4338 .
 
+Lo que ha ocurrido es lo mismo de antes con el payload formado por 'A's. En este caso se ha vuelto a producir un desbordamiento del buffer y se ha sobrescrito el registro EIP con 4 bytes procedentes del payload enviado. Al ser estos identificables, 396F4338 no deja de ser el número en hexadecimal de los carácteres ASCII del payload que se han guardado en el registro, es decir, **8Co9**.
+
 <img width="425" height="21" alt="image" src="https://github.com/user-attachments/assets/ea9aa420-a743-4d25-a9a3-a0b95e428143" />
 
 Al ejecutar en Immunity Debugger el comando de Mona _pattern_offset_ con la dirección que marca el registro EIP:
@@ -568,8 +576,7 @@ Obtenemos lo siguiente:
 
 <img width="635" height="206" alt="image" src="https://github.com/user-attachments/assets/9a9e5022-ab02-4752-9a2f-31c39252e478" />
 
-El comando ha encontrado el patrón 8Co9 de la dirección indicada anteriormente en la posición 2006.
-Esto quiere decir que el offset son 2006 bytes y que se pueden enviar 2006 'A's y después 4 'B's para observar que 2006 es la longitud hasta entrar o sobrescribir el EIP.
+El comando ha encontrado que el patrón 8Co9 está la posición 2006 del patrón cíclico hallado. Esto quiere decir que el offset son 2006 bytes y que se pueden enviar 2006 'A's y después 4 'B's para observar que 2006 es la longitud hasta entrar y sobrescribir el EIP.
 
 **3. Comando _findmsp_:**
 
@@ -595,7 +602,7 @@ Como resultado se obtiene información sobre el offset de los registros y tambi�
 
 Una vez identificado el offset (2006 bytes) se puede modificar la entrada para sobrescribir EIP y confirmar el control de la ejecución.
 
-Por ejemplo, reemplazar EIP por 0x42424242 (que representa 'BBBB' en ASCII) es una forma común de verificar que el registro se ha sobrescrito correctamente.
+Por ejemplo, reemplazar el registro EIP por 0x42424242 (que representa 'BBBB' en ASCII) es una forma común de verificar que el registro se ha sobrescrito correctamente.
 
 En este caso se hace uso del siguiente script en Python.
 
@@ -652,11 +659,17 @@ finally:
 
 </details>
 
+Con vulnserver corriendo en Immunity al ejecutar en una CMD el script anterior se envía al programa una secuencia de 2006 'A's seguido de 'BBB' para de nuevo provocar el desbordamiento y comprobar que el registro EIP se ha sobrescrito con 'BBBB'. De esta manera determinamos que el offset es el correcto y podemos controlar el registro.
 
+Tras la ejecución del script, en la ventana de registros de Immunity se observa que el registro EIP se ha sobrescrito tal y como estaba previsto con 0x42424242, 'BBBB' en ASCII.
 
+<img width="158" height="205" alt="image" src="https://github.com/user-attachments/assets/7c1bf4f8-8ab2-4948-9b21-2bd71d0bb7fe" />
 
+En el registro ESP (el tope de la pila) si hacemos clic derecho y seleccionamos '_Follow in stack_' y en la ventana del stack hacemos clic derecho y seleccionamos 'HEX' -> 'HEX/ASCII (8 bytes)' se puede observar que lo que se tiene en la pila son todas las 'A's enviadas y finalmente las 4 'B's.
 
+<img width="348" height="198" alt="image" src="https://github.com/user-attachments/assets/f2c9a5f8-bd08-4ac9-a017-641449d5bc55" />
 
+Esto demuestra que tenemos control sobre EIP.
 
 
 
