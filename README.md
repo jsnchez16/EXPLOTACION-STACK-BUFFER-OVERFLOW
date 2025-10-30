@@ -91,6 +91,8 @@ git clone https://github.com/stephenbradshaw/vulnserver
 ```
 - El contenido del repositorio incluye el código, librerías y otros archivos entre los que se encuentra el binario ejecutable.
 
+---
+
 <img width="614" height="237" alt="image" src="https://github.com/user-attachments/assets/e7244b09-c73d-4cf6-b99c-a56a12520999" />
 
 ---
