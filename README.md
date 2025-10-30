@@ -35,6 +35,7 @@ Este repositorio sirve como explicación y aplicación de metodología y anális
 * [7.5. JMP ESP](#step7-5)
 * [7.6. Generación del Shellcode](#step7-6)
 * [7.7 Ejecución del Shellcode y explotación final](#step7-7)
+* [8. Mitigación](#step8)
 	
 ---
 ---
@@ -1299,3 +1300,12 @@ A continuación se muestra un pequeño vídeo como ejemplo de la explotación fi
 ---
 
 https://github.com/user-attachments/assets/516d317e-7edb-4418-a08d-687e49125af3
+
+<a name="step8"></a>
+
+## 💊 ***8. Mitigación***
+
+Desconfiar siempre de la entrada del usuario. La prevención de desbordamientos de pila consiste básicamente en validar la longitud de los datos antes de pasarlos a funciones que puedan sobrescribir un búfer. 
+Lo más seguro en C es evitar funciones inseguras (ej.: sprintf, strcpy, strcat, gets — y manejar con cuidado printf) y usar equivalentes seguros cuando existan (fgets, sprintf_s, strcpy_s, strcat_s o la Safe C Library en Unix).
+
+Además, emplear protecciones del compilador como stack canaries (StackGuard, ProPolice, etc.) ayuda a detectar sobrescrituras antes de que corrompan datos de control, proporcionando una defensa adicional.
