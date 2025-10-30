@@ -103,6 +103,8 @@ git clone https://github.com/stephenbradshaw/vulnserver
 - Se puede descargar en el siguiente repositorio (https://github.com/kbandla/ImmunityDebugger/releases/tag/1.85).
 - Click sobre el fichero .exe y se iniciará la descarga.
 
+---
+
 <img width="413" height="470" alt="image" src="https://github.com/user-attachments/assets/19762637-91b3-4689-9164-6e7add71718d" />
 
 ---
@@ -113,10 +115,16 @@ git clone https://github.com/stephenbradshaw/vulnserver
 
 - Una vez descargado, localizar el ejecutable setup y doble click para comenzar el proceso de instalación.
 - Aceptar los términos y condiciones e instalar siguiendo el proceso.
+
+---
   
 <img width="481" height="331" alt="image" src="https://github.com/user-attachments/assets/4457e17c-07ac-474e-bb1c-59bb343cda00" />
 
+---
+
 - Posteriormente, localizar el ejecutable Immunity Debugger para ejecutar el programa haciendo doble click. Por defecto, en la instalación se genera la carpeta _C:\Program Files (x86)\Immunity Inc\Immunity Debugger_ .
+
+---
 
 <img width="613" height="516" alt="image" src="https://github.com/user-attachments/assets/8629c3a7-42ce-4b2c-9e54-dfe6a513ef91" />
 
@@ -147,13 +155,19 @@ git clone https://github.com/corelan/mona.git
 
 - Abrir Immunity Debugger como administrador y ejecutar el comando '**!mona**' en la barra inferior para comprobar que está bien importado. Se mostrará el manual de ayuda.
 
+---
+
 <img width="1914" height="1032" alt="image" src="https://github.com/user-attachments/assets/cfcb9822-5c0f-4332-85be-febb04a73d3c" />
+
+---
 
 Con el comando: 
 
 ```!mona config -set workingfolder C:\mona\%p```
 
 todo lo que se vaya generando con Mona se guarda en una carpeta establecida en la ruta que se prefiera. 
+
+---
 
 <img width="819" height="107" alt="image" src="https://github.com/user-attachments/assets/e6450ece-4ef4-4607-8f53-018066f5fced" />
 
@@ -209,7 +223,11 @@ todo lo que se vaya generando con Mona se guarda en una carpeta establecida en l
 - De esta manera se ejecuta una instancia del binario y se obtiene la información del binario, código ensamblador, registros, direcciones que utiliza, etc.
 - En la esquina inferior derecha se indica el estado de ejecución del binario.
 
+---
+
 <img width="1918" height="1027" alt="image" src="https://github.com/user-attachments/assets/fcc776d6-0b8f-4a60-931c-5205f66d3081" />
+
+---
 
 La vista que se obtiene consiste en cuatro ventanas:
 
@@ -224,10 +242,16 @@ Dump de memoria - Stack
 ## ***4. Vulnserver en IDA Free***
 
 - Al abrir IDA Free seleccionar si es la primera vez **New Dissasemble a new file**.
+
+---
   
 <img width="392" height="353" alt="image" src="https://github.com/user-attachments/assets/493d7c1a-2b42-4475-9087-dcbbc4b70bf3" />
 
+---
+
 - Seleccionar el ejecutable de vulnserver.
+
+---
 
 <img width="674" height="382" alt="image" src="https://github.com/user-attachments/assets/f982595e-8d1f-4fe1-9b5d-ccbb4ff01a65" />
 
@@ -235,12 +259,15 @@ Dump de memoria - Stack
 
 <img width="557" height="488" alt="image" src="https://github.com/user-attachments/assets/704c8501-7eea-4c22-bbbd-12469ff249c5" />
 
+---
+
 - Al cargar el binario se obtiene toda la información de este repartida en ventanas y pestañas. Existen dos ventanas principales:
   
 	- En la ventana ‘Functions’ a la izquierda se muestran las funciones que se están utilizando.La ventana de la derecha 		se divide en diferentes pestañas relacionadas que proporcionan los datos sobre la función seleccionada en la ventana 		anterior.
    
  	- La primera pestaña, ‘IDA View-A’, muestra el esquema en árbol del código ensamblador de la función seleccionada del 		binario.
 
+---
 
 <img width="1297" height="1028" alt="image" src="https://github.com/user-attachments/assets/d2f890c8-5af2-479b-93b0-f76592ee5ee1" />
 
@@ -252,7 +279,11 @@ Dump de memoria - Stack
 
 - Al ejecutar el binario (.exe) se abre una terminal en la que el servidor se queda esperando por conexiones.
 
+---
+
 <img width="803" height="345" alt="image" src="https://github.com/user-attachments/assets/91bb667d-556f-441f-88bc-112b653ba943" />
+
+---
 
 - El servidor espera por conexiones en el puerto 9999. La conexión puede realizarse de múltiples maneras. A continuación se muestran dos de ellas. En ambos casos se ha utilizado la herramienta Netcat de Nmap.
 
@@ -264,11 +295,19 @@ Dump de memoria - Stack
 		nc 192.168.1.54 9999.
 	```
 
+---
+
 	<img width="940" height="391" alt="image" src="https://github.com/user-attachments/assets/fb0f0b9b-2f69-40fc-ba34-6a7a9df15303" />
+
+---
 
  	**Servidor y conexión en la misma máquina local** 
 
+---
+
 	<img width="518" height="366" alt="image" src="https://github.com/user-attachments/assets/08f903db-1d84-4446-b362-a7eac54b1061" />
+
+---
 
 - En cualquier caso, al obtener una conexión exitosa, desde la terminal donde se envía el comando se toma el control del servidor, ofreciendo este una entrada primera para escribir el comando 'HELP'. Mientras tanto, la terminal del servidor muestra los mensajes de las conexiones recibidas.
 
@@ -289,6 +328,8 @@ Antes de comenzar con la explotación hay que entender la funcionalidad y estruc
 Una de las principales maneras de entender en este caso el binario a explotar es ejecutándolo y comprobar qué se puede hacer con el en una ejecución normal, qué parámetros acepta, qué muestra, etc. Entra dentro de lo que se denomina **análisis dinámico**.
 
 En el caso de nuestro binario vulnserver una vez realizada la conexión con el servidor se muestra un prompt para introducir el comando HELP. Al hacerlo, se muestra una lista de los comandos válidos y cómo utilizarlos. Cada comando debe venir acompañado de una cadena de caracteres.
+
+---
 
 <img width="455" height="356" alt="image" src="https://github.com/user-attachments/assets/cdabd144-395b-43bc-9be4-e52a25615223" />
 
@@ -317,23 +358,39 @@ Para obtener y entender el código ensamblador del binario así como el flujo de
 
 - Una vez abierto el programa con el binario cargado, **ir a View -> Open subviews -> Generate pseudocode (F5)**.
 
+---
+
 <img width="538" height="128" alt="image" src="https://github.com/user-attachments/assets/ed009768-aca5-45fc-ad55-9acd7a449a86" />
+
+---
 
 - En la ventana de IDA View-A, **clic derecho -> Synchronize with -> Pseudocode-A** . Se obtiene una sincronización entre el código ensamblador y el pseudocódigo generado al seleccionar cualquier línea de código. 
 
+---
+
 <img width="985" height="674" alt="image" src="https://github.com/user-attachments/assets/f243a022-4cc8-452a-8920-376b64505a07" />
 
+---
+
 De esta manera se obtiene una imagen más visual de a qué corresponde cada parte del código ensamblador.
+
+---
 
 <img width="1489" height="686" alt="image" src="https://github.com/user-attachments/assets/def9d2bf-3dcb-4547-82d5-ae17ff0027af" />
 
 ---
 
+De esta forma, si se investiga un poco el pseudocódigo generado, se puede llegar a entender que la vulnerabilidad inherente del programa se produce a la hora de copiar/concatenar datos sin comprobar la longitud en buffers de tamaño fijo.
+
+Parte culpable: los handlers de comandos que reciben datos y los copian en buffers de tamaño fijo sin validación.
+
+Funciones concretas a buscar en el código fuente: strcpy, strcat, sprintf, gets, memcpy (mal usado), o cualquier recv seguida de copia sin comprobación.
+
 <a name="step7"></a>
 
 ## 💥 ***7. Explotación***
 
-Tras el análisis del binario y entender su funcionamiento y flujo de trabajo, es hora de realizar la explotación. 
+Tras el análisis del binario y entender su funcionamiento, flujo de trabajo y posible causa de la vulnerabilidad, es hora de realizar la explotación. 
 
 ---
 
@@ -420,7 +477,11 @@ Por cada envío incremental se abre y cierra la conexión al servidor hasta que 
 
 - Al ejecutar vulnserver desde Immunity Debugger de manera inicial estará en estado 'Paused', se muestra en la esquina inferior derecha. Debe verse así:
 
+---
+
 <img width="1913" height="1030" alt="image" src="https://github.com/user-attachments/assets/19a91228-cc12-4788-82f7-214fb6a9d3fb" />
+
+---
 
 Los registros de memoria apuntan a direcciones determinadas y son registros de arquitectura x86, es decir, de 32 bits. 
 
@@ -428,25 +489,41 @@ El registro más importante a tener en cuenta para la explotación es el **regis
 
 Otros interesantes son el registro EBP (Base Pointer), que almacena la dirección de la parte superior del marco de pila con el que se trabaja actualmente y el registro ESP (Stack Pointer), que apunta al tope actual de la pila (donde se encuentran las variables locales / retorno).
 
+---
+
 <img width="343" height="295" alt="image" src="https://github.com/user-attachments/assets/1bde4a97-3723-41c2-bde1-1512a6398cbf" />
+
+---
 
 - Para iniciar la ejecución del servidor y pasar al estado 'Running' hacer clic sobre el icono de play en la barra de herramientas superior.
 
+---
+
 <img width="394" height="138" alt="image" src="https://github.com/user-attachments/assets/a63f7aae-4c58-4e48-8331-dfc2b5e216d5" />
+
+---
 
 - Para ejecutar el programa de fuzzing basta con abrir una CMD en la carpeta donde se tiene el fichero Python y ejecutar el comando ``` python nombreProgramaFuzzing.py ``` 
 
 El programa envía entradas en bucle aumentando la longitud de la cadena de caracteres a enviar hasta que vulnserver crashea al enviar una cadena de longitud 2200 bytes.
 
+---
+
 <img width="546" height="396" alt="image" src="https://github.com/user-attachments/assets/8fdb7a71-e207-4e02-be09-ce6c229f43b0" />
 
+---
+
 Si nos fijamos en Immunity Debugger el log ya indica que se ha producido una violación de acceso en la dirección 0x41414141 y que el programa ha pasado a estado 'Paused'.
+
+---
 
 <img width="430" height="359" alt="image" src="https://github.com/user-attachments/assets/f474175f-6580-4f77-b759-d8ff5a8f1012" />
 
 --- 
 
 <img width="893" height="578" alt="image" src="https://github.com/user-attachments/assets/050fd634-8eee-4be1-9a76-9033815b59ce" />
+
+---
 
 En la ventana de registros de la vista CPU se observa que los registros EIP, EBP han sido sobreescritos con 0x41414141 y ESP apunta al tope de la pila a una dirección que contiene una larga secuencia de "A"s .
 
@@ -488,15 +565,27 @@ Los comandos _findmsp_ , _pattern_offset_ y _pattern_create_ generan y analizan 
 !mona pattern_create 3000
 ```
 
+---
+
 <img width="1133" height="207" alt="image" src="https://github.com/user-attachments/assets/02fccc63-16af-433e-8415-2e9d50a7dc01" />
+
+---
 
 Si el comando ha funcionado, y se ha configurado anteriormente que el resultado se guarde en un fichero de la carpeta especificada entonces aparecerá algo como esto:
 
+---
+
 <img width="789" height="188" alt="image" src="https://github.com/user-attachments/assets/077aae4b-48df-4240-97a5-ffdf60b74f7e" />
+
+---
 
 Y cuyo contenido será la información generada por el comando junto con el patrón creado en diferentes formatos:
 
+---
+
 <img width="431" height="650" alt="image" src="https://github.com/user-attachments/assets/a08e6722-926c-44df-8d0a-1aa862495030" />
+
+---
 
 Al ser un patrón cíclico se puede identificar en qué posición del patrón se sobrescribe el registro EIP para establecer cuanta información hay que enviar hasta sobrescribir la información de retorno.
 
@@ -563,13 +652,21 @@ Este exploit en Python se encarga de establecer una conexión TCP con vulnserver
 
 Al enviarse un payload de 3000 bytes se producirá de nuevo un crash del programa.
 
+---
+
 <img width="419" height="590" alt="image" src="https://github.com/user-attachments/assets/6531579e-e540-4dad-903a-3179593ab00d" />
+
+---
 
 En este caso el programa se queda bloqueado indicando una violación de acceso al ejecutar la instrucción de la dirección a la que apunta el registro EIP, la 396F4338 .
 
 Lo que ha ocurrido es lo mismo de antes con el payload formado por 'A's. En este caso se ha vuelto a producir un desbordamiento del buffer y se ha sobrescrito el registro EIP con 4 bytes procedentes del payload enviado. Al ser estos identificables, 396F4338 no deja de ser el número en hexadecimal de los carácteres ASCII del payload que se han guardado en el registro, es decir, **8Co9**.
 
+---
+
 <img width="425" height="21" alt="image" src="https://github.com/user-attachments/assets/ea9aa420-a743-4d25-a9a3-a0b95e428143" />
+
+---
 
 Al ejecutar en Immunity Debugger el comando de Mona _pattern_offset_ con la dirección que marca el registro EIP:
 
@@ -579,7 +676,11 @@ Al ejecutar en Immunity Debugger el comando de Mona _pattern_offset_ con la dire
 
 Obtenemos lo siguiente:
 
+---
+
 <img width="635" height="206" alt="image" src="https://github.com/user-attachments/assets/9a9e5022-ab02-4752-9a2f-31c39252e478" />
+
+---
 
 El comando ha encontrado que el patrón 8Co9 está la posición 2006 del patrón cíclico hallado. Esto quiere decir que el offset son 2006 bytes y que se pueden enviar 2006 'A's y después 4 'B's para observar que 2006 es la longitud hasta entrar y sobrescribir el EIP.
 
@@ -592,6 +693,8 @@ De la misma manera que se ha ejecutado el anterior comando de Mona, también es 
 ```
 
 Como resultado se obtiene información sobre el offset de los registros y también se genera un fichero con toda la información recopilada con Mona al respecto.
+
+---
 
 <img width="1084" height="301" alt="image" src="https://github.com/user-attachments/assets/b15e0ed5-636b-43e5-a1d9-bfe9066759f4" />
 
@@ -668,16 +771,27 @@ Con vulnserver corriendo en Immunity al ejecutar en una CMD el script anterior s
 
 Tras la ejecución del script, en la ventana de registros de Immunity se observa que el registro EIP se ha sobrescrito tal y como estaba previsto con 0x42424242, 'BBBB' en ASCII.
 
+---
+
 <img width="158" height="205" alt="image" src="https://github.com/user-attachments/assets/7c1bf4f8-8ab2-4948-9b21-2bd71d0bb7fe" />
+
+---
 
 En el registro ESP (el tope de la pila) si hacemos clic derecho y seleccionamos '_Follow in stack_' se puede observar que lo que se tiene en la pila son todas las 'A's enviadas y finalmente las 4 'B's.
 
+---
+
 <img width="208" height="162" alt="image" src="https://github.com/user-attachments/assets/29ce03bd-b9cc-4cf7-97d3-cfaf330e4f24" />
 
+---
 
 Si en la ventana del dump hacemos clic derecho y seleccionamos 'HEX' -> 'HEX/ASCII (8 bytes)' también se observa el dump de memoria
 
+---
+
 <img width="348" height="198" alt="image" src="https://github.com/user-attachments/assets/f2c9a5f8-bd08-4ac9-a017-641449d5bc55" />
+
+---
 
 Esto demuestra que tenemos control sobre EIP, por lo tanto, podemos controlar el salto a la siguiente instrucción a ejecutar.
 
@@ -695,7 +809,11 @@ Siguiendo el paso anterior, la sobrescritura puede seguir realizandose y enviar 
 
 Si ahora enviamos este nuevo payload se puede observar que en el tope de la pila (el registro ESP), se encuentran las 'C's añadidas.
 
+---
+
 <img width="222" height="321" alt="image" src="https://github.com/user-attachments/assets/41ec7771-75e8-40b8-8d2e-faddd88d19f5" />
+
+---
 
 Por lo tanto, tras controlar el EIP, se puede añadir más información en el registro ESP.
 
@@ -705,7 +823,11 @@ Si somos capaces de encontrar una dirección de memoria que contenga una instruc
 
 El comando **!mona modules** muestra las DLLs que está importando el binario. Nos vale para comprobar si tienen habilitados mecanismos de protección como ASLR, SafeSEH, CFG o data execution prevention y de esta manera ver si la explotación puede ser viable.
 
+---
+
 <img width="1665" height="340" alt="image" src="https://github.com/user-attachments/assets/b4318c06-f5d6-464b-9ae7-186e59903647" />
+
+---
 
 Por ejemplo en el caso de la DLL _essfunc.dll_ esta no tiene ASLR habilitado por lo tanto la explotación puede ser viable. Si lo estuviera, en cada ejecución sus instrucciones se cargarían en una dirección de memoria diferente imposibilitando ejecutar la instrucción deseada y el exploit no sería reproducible.
 
@@ -724,11 +846,19 @@ Además, lo que se envíe al EIP como dirección a sobrescribir tampoco puede ll
 
 Para hacer la prueba y entender lo que ocurre con los bad chars se pone un ejemplo con el caracter nulo '\x00'.
 
+---
+
 <img width="495" height="27" alt="image" src="https://github.com/user-attachments/assets/e8ff7586-5ec7-4f63-938b-334baf0d8043" />
+
+---
 
 Se envía como payload una secuencia que contiene el caracter nulo \x00 . Si nos fijamos en el dump de memoria tras el overflow se observa lo siguiente:
 
+---
+
 <img width="359" height="110" alt="image" src="https://github.com/user-attachments/assets/c68127fb-3386-4f3e-8a07-b2a189353252" />
+
+---
 
 En este caso, tras la primera secuencia de 'C's que se han enviado se encuentra un '00'. Es decir, el programa ha detectado el caracter nulo y ha detenido la ejecución por lo tanto las siguientes 46 'C's ya no aparecen porque que no se han escrito.
 
@@ -809,7 +939,11 @@ finally:
 
 El comando **!mona bytearray** genera un array de caracteres como el que se utiliza en el script anterior y genera un .txt y un .bin .
 
+---
+
 <img width="1060" height="278" alt="image" src="https://github.com/user-attachments/assets/ba599e52-6f8e-42fa-a2a0-4e5da8ff68f3" />
+
+---
 
 Al volver a ejecutar el binario vulnserver en Immunity una vez generados el array de caracteres se puede con Mona comparar el bin generado con lo que habíamos puesto en ESP.
 
@@ -825,7 +959,11 @@ De esta manera:
 
 - Mona muestra las diferencias, indica el/los offset(s) donde los bytes no coinciden y genera un informe en la carpeta de trabajo de Mona.
 
+---
+
 <img width="1146" height="884" alt="image" src="https://github.com/user-attachments/assets/a0f58556-856c-4911-bd7c-71012839b225" />
+
+---
 
 En este caso aparecen muchos porque sólo hemos enviado el \x00. Si por ejemplo aparece que un bad caracter es \x08, probar a hacer de nuevo !mona bytearray -b "\x08" y volver a realizar la comparación.
 
@@ -867,11 +1005,19 @@ Otros comandos útiles:
 
 	- Resultado: lista de direcciones válidas donde hay un JMP ESP (o el patrón buscado), junto con info del módulo/offset — sirve para elegir una dirección segura para usar como retorno en el exploit.
 
+---
+
 <img width="1829" height="196" alt="image" src="https://github.com/user-attachments/assets/60f04651-9293-4181-b269-bc8c59adddbf" />
+
+---
 
 En la captura se muestran todas aquellas direcciones que se pueden utilizar y que contienen JMP ESP sin bad chars. Si hacemos doble clic sobre alguna de ellas nos redirige a la ventana del código ensamblador donde se encuentra la instrucción.
 
+---
+
 <img width="294" height="78" alt="image" src="https://github.com/user-attachments/assets/dc79f5e9-868c-4e9a-9039-082cdf182a81" />
+
+---
 
 Por lo tanto, si podemos sustituir el EIP por la dirección seleccionada que contiene JMP ESP podremos ejecutar el código introducido como payload en ESP.
 
@@ -940,11 +1086,19 @@ finally:
 
 Esta vez al ejecutar vulnserver desde Immunity y ejecutar desde CMD el script se obtiene algo diferente a lo que se venía mostrando cuando se producía el desbordamiento del búfer.
 
+---
+
 <img width="838" height="438" alt="image" src="https://github.com/user-attachments/assets/a627149a-39af-4bf0-b453-e1bba205a205" />
+
+---
 
 En este caso se comprueba que no se ha producido desbordamiento. El estado del programa ha pasado a 'Paused' al ejecutarse correctamente.
 
+---
+
 <img width="970" height="443" alt="image" src="https://github.com/user-attachments/assets/401189ad-3f41-4187-82ea-ee39a25d5ec7" />
+
+---
 
 - 🟥 En primer lugar se han enviado las 2006 'A's (0x41).
 - 🟦Se ha sobrescrito el contenido del registro EIP con la dirección de salto al ESP
@@ -996,7 +1150,11 @@ Se ha escogido en este caso el shell_reverse_tcp, pero podría haber sido otro.
 
 Al ejecutarlo se genera el siguiente shellcode.
 
+---
+
 <img width="1010" height="683" alt="image" src="https://github.com/user-attachments/assets/39c4cbff-15a3-4749-ab5d-bb0a6f2c8af1" />
+
+---
 
 A través del siguiente script se emplea el shellcode obtenido.
 Al conectar con vulnserver le envía una entrada (buffer) formada por el siguiente payload:
@@ -1109,17 +1267,33 @@ Al hacer la explotación final se pretende obtener una shell inversa del sistema
 
 1. Ejecución de vulnserver (de manera directa sobre el ejecutable o desde Immunity).
 
+---
+
 <img width="504" height="185" alt="image" src="https://github.com/user-attachments/assets/8b07f6f0-861c-4595-863a-b45aea7ebb07" />
+
+---
 
 2. Abrir una CMD y ejecutar el comando ``` ncat -nlvp 443 ``` . De esta manera se inicia la herramienta ncat en modo escucha TCP en el puerto 443 esperando a la recepción de una conexión entrante (la shell inversa que vamos a ejecutar a continuación).
 
+---
+
 <img width="417" height="171" alt="image" src="https://github.com/user-attachments/assets/9e64834d-a0f2-43ee-b8be-eeb60d283ee4" />
+
+---
 
 3. Abrir otra CMD y ejecutar el script del paso anterior que envía y ejecuta la shellcode a vulnserver.
 4. Al ejecutar el script obtenemos al instante la shell inversa en la CMD donde estábamos escuchando en el puerto 443
 
+---
+
 <img width="1106" height="739" alt="image" src="https://github.com/user-attachments/assets/d894dcbb-be53-44b3-8611-0c6d3d1ad494" />
 
-De esta manera se consigue explotar la vulnerabilidad logrando la ejecución remota de código.  
+---
+
+De esta manera se consigue explotar la vulnerabilidad logrando la ejecución remota de código. 
+
+A continuación se muestra un pequeño vídeo como ejemplo de la explotación final.
+
+---
 
 https://github.com/user-attachments/assets/516d317e-7edb-4418-a08d-687e49125af3
